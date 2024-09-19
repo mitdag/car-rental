@@ -8,9 +8,12 @@ erDiagram
         string email
         string password
         string phone_number
+        string address
         string user_type
         float rating
         boolean is_verified
+        datetime created_at
+        datetime last_login
     }
     Car ||--o{ Rental : "is rented in"
     Car ||--o{ Favorite : "is favorited in"
@@ -20,11 +23,11 @@ erDiagram
         string make
         string model
         int year
-        string car_type
+        string transmisson_type
+        string motor_type
         float price_per_day
-        string location
         text description
-        text rules
+        boolean is_listed
     }
     Rental {
         int rental_id PK
@@ -60,7 +63,6 @@ erDiagram
     Notification {
         int notification_id PK
         int user_id FK
-        string type
         text message
         datetime created_at
         boolean is_read
