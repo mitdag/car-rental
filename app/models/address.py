@@ -4,12 +4,11 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 
-
 class DBAddress(Base):
-    __tablename__="addresses"
+    __tablename__ = "addresses"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True)
-    street_name = Column(String)
+    street = Column(String)
     number = Column(String)
     postal_code = Column(String)
     city = Column(String)

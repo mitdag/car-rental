@@ -1,5 +1,3 @@
-from datetime import datetime, timedelta
-
 from app.core.database import Base
 from sqlalchemy import Column, Integer, String, DateTime
 

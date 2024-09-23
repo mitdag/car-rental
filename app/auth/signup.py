@@ -26,5 +26,5 @@ def signup(email: str = Body(...), password: str = Body(...), db: Session = Depe
 
 @router.get("/confirm")
 def signup_confirmation(id: int= Query(...), key: str = Query(...), db: Session = Depends(database.get_db)):
-    return Response(status_code=status.HTTP_200_OK, content=create_signup_user_from_confirmation_mail(id, key, db))
+    return create_signup_user_from_confirmation_mail(id, key, db)
 

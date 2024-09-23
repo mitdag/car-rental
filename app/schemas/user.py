@@ -29,13 +29,16 @@ class UserDisplay(BaseModel):
     user_type: UserType
     is_verified: bool = False
 
+    class Config():
+        orm_mode = True
+
 
 class UserProfile(BaseModel):
     user_id: int
     name: str
     last_name: str
     phone_number: str
-    street_name: str
+    street: str
     number: str
     postal_code: str
     city: str

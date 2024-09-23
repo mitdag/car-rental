@@ -1,6 +1,8 @@
 import datetime
 import uuid
 
+from app.schemas.address import AddressProfile
+from app.services.address import update_user_address
 from sqlalchemy.orm import Session
 from fastapi.exceptions import HTTPException
 from fastapi import status
@@ -10,7 +12,6 @@ from app.models.user import DBUser
 from app.schemas.enums import LoginMethod, UserType
 from app.schemas.user import UserProfile
 from app.utils.hash import Hash
-from app.services import address
 
 CONFIRMATION_EXPIRE_PERIOD_IN_DAYS = 1
 
@@ -67,17 +68,24 @@ def modify_user_profile(user_profile: UserProfile, db: Session):
     if not user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User does not exist.")
 
-    user = DBUser(user)
     user.name = user_profile.name
     user.last_name = user_profile.last_name
     user.phone_number = user_profile.phone_number
 
-    user_address = address.get_address_by_user_id(user_profile.user_id)
+    db.add(user)
+    db.commit()
+    db.flush(user)
 
-    user_id: int
-    street_name: str
-    number: str
-    postal_code: str
-    city: str
-    state: str
-    country: str
+    update_user_address(
+        user_id=user_profile.user_id,
+        address_profile=AddressProfile(
+            street=user_profile.street,
+            number=user_profile.number,
+            postal_code=user_profile.postal_code,
+            city=user_profile.city,
+            state=user_profile.state,
+            country=user_profile.country
+        ),
+        db=db
+    )
+    return user_profile

@@ -1,16 +1,27 @@
+from typing import Dict
+
 from geopy.geocoders import Nominatim
 
-# Initialize the Nominatim geocoder
-geolocator = Nominatim(user_agent="car-rental")
+geolocator = Nominatim(user_agent="car-rental", timeout=3)
 
 
-def address_to_lat_lon(address: str):
+def address_to_lat_lon(address: Dict):
     location = geolocator.geocode(address)
     if location:
-        return {"lat": location.latitude, "long": location.longitude}
+        return {"latitude": location.latitude, "longitude": location.longitude}
     else:
-        return None
+        return {"latitude": None, "longitude": None}
 
 
-print(address_to_lat_lon("175 5th Avenue NYC"))
-print(address_to_lat_lon("Merellaan, 2289EB, Rijswijk, ZH, Netherland"))
+# print(address_to_lat_lon("175 5th Avenue NYC"))
+# print(address_to_lat_lon("q=102+Merellaan,+Rijswijk+Netherlands")) # "102 Merellaan Street, Rijswijk, Netherland"))
+
+
+# {
+#   "street": "70 Lange Kleiweg",
+#   "postalcode": "2288GK",
+#   "city": "Rijswijk",
+#   "state": "ZH",
+#   "country": "Netherlands"
+# }
+# ))

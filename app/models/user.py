@@ -1,11 +1,10 @@
 import datetime
 
-from sqlalchemy import Column, Integer, String, Enum as SqlEnum, Float, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Enum as SqlEnum, Float, Boolean, DateTime
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 from app.schemas.enums import LoginMethod, UserType
-from app.models.address import DBAddress
 
 
 class DBUser(Base):

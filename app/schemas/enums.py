@@ -7,6 +7,7 @@ class LoginMethod(Enum):
     GOOGLE = 3
     APPLE = 4
 
+
 class UserType(Enum):
     USER = 1,
     ADMIN = 2

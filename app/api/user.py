@@ -1,3 +1,4 @@
+from app.services import user
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -9,12 +10,6 @@ router = APIRouter(
     tags=["user"]
 )
 
-@router.post("/new")
-def create_new_user(user: UserBase):
-    return user
-
-
-
 @router.post("/profile")
 def modify_user_profile(user_profile: UserProfile, db: Session = Depends(database.get_db)):
-    print(user_profile)
+    return user.modify_user_profile(user_profile, db)
