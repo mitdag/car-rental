@@ -3,7 +3,7 @@ from fastapi import FastAPI
 import uvicorn
 
 from app import core
-from app.api import user
+from app.routers import user
 from app.auth import signup
 from app.core.database import Base
 from app.core.database import engine

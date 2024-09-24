@@ -1,16 +1,17 @@
 import datetime
 import uuid
 
-from app.schemas.address import AddressProfile
-from app.services.address import update_user_address
-from sqlalchemy.orm import Session
-from fastapi.exceptions import HTTPException
 from fastapi import status
+from fastapi.exceptions import HTTPException
+from sqlalchemy.orm import Session
 
 from app.models.signup_confirmations import DBSignUpConfirmation
 from app.models.user import DBUser
+from app.schemas.address import AddressProfile
 from app.schemas.enums import LoginMethod, UserType
 from app.schemas.user import UserProfile
+from app.services import address
+from app.services.address import update_user_address
 from app.utils.hash import Hash
 
 CONFIRMATION_EXPIRE_PERIOD_IN_DAYS = 1
@@ -89,3 +90,19 @@ def modify_user_profile(user_profile: UserProfile, db: Session):
         db=db
     )
     return user_profile
+
+
+def delete_user(user_id: int, db: Session):
+    user = db.query(DBUser).filter(user_id == DBUser.id).first()
+    if user:
+        db.delete(user)
+        db.commit()
+        result_address = address.delete_user_address(user_id, db)
+        # TODO add delete car
+        # result_car = car.delete_user_address(user_id, db)
+        return {
+            "user": "Deleted",
+            "address": result_address,
+            # "car": result_car
+        }
+    return {"user": "No such user"}

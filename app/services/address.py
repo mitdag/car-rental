@@ -1,10 +1,10 @@
 import datetime
 
-from app.utils.address_translation import address_to_lat_lon
 from sqlalchemy.orm import Session
 
 from app.models.address import DBAddress
 from app.schemas.address import AddressProfile
+from app.utils.address_translation import address_to_lat_lon
 
 
 def get_address_by_user_id(user_id: int, db: Session):
@@ -37,3 +37,12 @@ def update_user_address(user_id: int, address_profile: AddressProfile, db: Sessi
     db.add(new_address)
     db.commit()
     db.flush(new_address)
+
+
+def delete_user_address(user_id: int, db: Session):
+    address = db.query(DBAddress).filter(user_id == DBAddress.user_id).first()
+    if address:
+        db.delete(address)
+        db.commit()
+        return "deleted"
+    return "No address for the user"
