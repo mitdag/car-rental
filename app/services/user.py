@@ -17,6 +17,14 @@ from app.utils.hash import Hash
 CONFIRMATION_EXPIRE_PERIOD_IN_DAYS = 1
 
 
+def get_user_by_id(user_id: int, db: Session):
+    return db.query(DBUser).filter(DBUser.id == user_id).first()
+
+
+def get_user_by_email(email: str, db: Session):
+    return db.query(DBUser).filter(DBUser.email == email).first()
+
+
 def create_signup_validation_entry(email: str, password: str, db: Session):
     user = db.query(DBUser).filter(email == DBUser.email).first()
     if user:
@@ -45,11 +53,11 @@ def create_signup_user_from_confirmation_mail(id: int, key: str, db: Session):
     db.delete(confirmation)
     db.commit()
     if confirmation.expires_at < datetime.datetime.utcnow():
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Confirmation link expired")
+        return {"result": False, "desc": "Confirmation link expired"}
 
     user = db.query(DBUser).filter(confirmation_email == DBUser.email).first()
     if user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User exists")
+        return {"result": False, "desc": "User already exists"}
 
     user = DBUser(
         email=confirmation_email,
@@ -61,7 +69,7 @@ def create_signup_user_from_confirmation_mail(id: int, key: str, db: Session):
     db.add(user)
     db.commit()
     db.flush(user)
-    return {"email": user.email}
+    return {"result": True, "desc": user.email}
 
 
 def modify_user_profile(user_profile: UserProfile, db: Session):
