@@ -52,7 +52,7 @@ erDiagram
         int reviewer_id FK
         int reviewee_id FK
         int rating
-        text comment
+        str comment
         datetime review_date
     }
     Favorite {
