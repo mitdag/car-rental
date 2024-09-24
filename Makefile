@@ -6,7 +6,7 @@ test:
 	pytest
 
 format:
-	ruff format *.py app/*.py
+	ruff format
 
 refactor: 
 	format lint
