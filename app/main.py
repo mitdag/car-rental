@@ -1,13 +1,10 @@
-from fastapi import FastAPI
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from app.auth import login, signup
+from app.core.database import Base, engine
 from app.routers import car, user
-from app.auth import signup, login
-from app.core.database import Base
-from app.core.database import engine
-from app.routers import user
 
 app = FastAPI()
 
