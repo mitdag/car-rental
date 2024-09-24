@@ -29,7 +29,7 @@ class UserDisplay(BaseModel):
     user_type: UserType
     is_verified: bool = False
 
-    class Config():
+    class Config:
         orm_mode = True
 
 
