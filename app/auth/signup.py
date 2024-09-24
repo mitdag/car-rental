@@ -1,16 +1,20 @@
-from fastapi import APIRouter, Depends, Body, Query,status
-from fastapi import Response
+from fastapi import APIRouter, Depends, Body, status, Request, Query
+from fastapi.responses import Response, HTMLResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.core import database
 from app.schemas.user import UserDisplay
-from app.services.user import create_signup_user_from_confirmation_mail, create_signup_validation_entry
+from app.services.user import create_signup_validation_entry, create_signup_user_from_confirmation_mail
 from app.utils import email_sender
 
 router = APIRouter(
     prefix="/signup",
     tags=["signup/login"]
 )
+
+templates = Jinja2Templates(directory="app/static/templates")
+
 
 @router.post("/", response_model=UserDisplay)
 def signup(email: str = Body(...), password: str = Body(...), db: Session = Depends(database.get_db)):
@@ -24,7 +28,25 @@ def signup(email: str = Body(...), password: str = Body(...), db: Session = Depe
     return Response(status_code=status.HTTP_200_OK, content="Confirmation mail has been sent")
 
 
-@router.get("/confirm")
-def signup_confirmation(id: int= Query(...), key: str = Query(...), db: Session = Depends(database.get_db)):
-    return create_signup_user_from_confirmation_mail(id, key, db)
-
+@router.get("/confirm", response_class=HTMLResponse)
+def signup_confirmation(
+        request: Request,
+        id: int = Query(...),
+        key: str = Query(...), db:
+        Session = Depends(database.get_db),
+):
+    result = create_signup_user_from_confirmation_mail(id, key, db)
+    if result["result"]:
+        title = "Signup Completed"
+        message = "Thank you for signing up. You can login and enjoy our app now!"
+    else:
+        title = "Signup Failed"
+        message = f"Sorry, something went wrong. ({result['desc']}). Please try again"
+    return templates.TemplateResponse(
+        "signup_confirmation.html",
+        {
+            "request": request,
+            "title": title,
+            "message": message
+        }
+    )

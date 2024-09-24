@@ -1,23 +1,22 @@
-from cgitb import text
 from datetime import datetime
 from pydantic import BaseModel
 
-class Review_Base(BaseModel):
+class ReviewBase(BaseModel):
       review_id: int
       rental_id: int
       reviewer_id: int
       reviewee_id: int
       rating: int
-      comment: text
+      comment: str
       review_date: datetime
     
-class Display_Review(BaseModel):
+class ReviewDisplay(BaseModel):
       review_id: int
       rental_id: int
       reviewer_id: int
       reviewee_id: int
       rating: int
-      comment: text
+      comment: str
       review_date: datetime
 
 

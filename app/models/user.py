@@ -22,4 +22,4 @@ class DBUser(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow())
     last_login = Column(DateTime, default=None)
     address = relationship("DBAddress", back_populates="user")
-    # cars = relationship("DBCar", back_populates="user")
+    cars = relationship("DBCar", back_populates="owner")

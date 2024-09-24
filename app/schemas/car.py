@@ -1,0 +1,28 @@
+from typing import Optional
+
+from pydantic import BaseModel
+
+
+class CarBase(BaseModel):
+    make: str
+    model: str
+    year: int
+    transmission_type: str
+    motor_type: str
+    price_per_day: float
+    description: Optional[str] = None
+    is_listed: Optional[bool] = True
+
+
+class CarDisplay(BaseModel):
+    make: str
+    model: str
+    year: int
+    transmission_type: str
+    motor_type: str
+    price_per_day: float
+    description: Optional[str]
+    is_listed: bool
+
+    class Config:
+        orm_mode = True
