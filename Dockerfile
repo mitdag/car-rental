@@ -1,4 +1,5 @@
 # ref: https://itskmyoo.medium.com/automating-fastapi-project-build-with-github-actions-and-push-to-dockerhub-b4c6df319b2a
+# ref: https://fastapi.tiangolo.com/deployment/docker/#use-cmd-exec-form
 
 # Use an official Python runtime as a parent image
 FROM python:3.11-slim
@@ -17,9 +18,6 @@ COPY . /app/
 
 # Make port 80 available to the world outside this container
 EXPOSE 8000
-
-# Define environment variable
-ENV NAME ob-sample-fast-api-docker
 
 # Run main.py when the container launches
 CMD ["fastapi", "run", "app/main.py", "--port", "8000"]
