@@ -6,7 +6,7 @@ test:
 	pytest
 
 format:
-	ruff format *.py mylib/*.py
+	ruff format *.py app/*.py
 
 lint:
 	#pylint --disable=R,C --ignore-patterns=test_.*?py *.py app/*.py
