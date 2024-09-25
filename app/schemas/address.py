@@ -19,3 +19,4 @@ class AddressProfile(BaseModel):
     city: str
     state: str
     country: str
+    address_confirmed: bool = False

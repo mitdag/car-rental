@@ -6,6 +6,7 @@ from app.core import database
 from app.schemas.enums import LoginMethod
 from app.services import user as user_service
 from app.utils.hash import Hash
+from app.utils.logger import logger
 
 router = APIRouter(
     prefix="/login",
@@ -27,7 +28,8 @@ def create_access_token(
             app_user = user_service.get_user_by_email(email, db)
             if not app_user or not Hash.verify(password, app_user.password):
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-        except:
+        except Exception:
+            logger.error(f"Login attempt with invalid credentials ({email})")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid credentials")
     else:
         user = user_service.get_user_by_email(email, db).first()

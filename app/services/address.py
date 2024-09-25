@@ -22,21 +22,26 @@ def update_user_address(user_id: int, address_profile: AddressProfile, db: Sessi
         "state": address_profile.state,
         "country": address_profile.country
     })
-    new_address = DBAddress(
-        user_id=user_id,
-        street=address_profile.street,
-        number=address_profile.number,
-        postal_code=address_profile.postal_code,
-        city=address_profile.city,
-        state=address_profile.state,
-        country=address_profile.country,
-        latitude=lat_long["latitude"],
-        longitude=lat_long["longitude"],
-        created_at=datetime.datetime.utcnow()
-    )
-    db.add(new_address)
-    db.commit()
-    db.flush(new_address)
+    if lat_long["latitude"] and lat_long["longitude"]:
+        new_address = DBAddress(
+            user_id=user_id,
+            street=address_profile.street,
+            number=address_profile.number,
+            postal_code=address_profile.postal_code,
+            city=address_profile.city,
+            state=address_profile.state,
+            country=address_profile.country,
+            latitude=lat_long["latitude"],
+            longitude=lat_long["longitude"],
+            created_at=datetime.datetime.utcnow()
+        )
+        db.add(new_address)
+        db.commit()
+        db.flush(new_address)
+        address_profile.address_confirmed = True
+    else:
+        address_profile.address_confirmed = False
+    return address_profile
 
 
 def delete_user_address(user_id: int, db: Session):
