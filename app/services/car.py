@@ -41,3 +41,7 @@ def delete_car(db: Session, car_id: int) -> Optional[DBCar]:
         db.delete(db_car)
         db.commit()
     return db_car
+
+
+def get_cars_by_user(db: Session, user_id: int):
+    return db.query(DBCar).filter(DBCar.owner_id == user_id).all()

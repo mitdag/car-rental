@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 
 class CarBase(BaseModel):
+    owner_id: int
     make: str
     model: str
     year: int
