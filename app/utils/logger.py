@@ -16,12 +16,20 @@ class Logger:
         self.__print_to_file__(inspect.stack()[1], self.__info_file__, message)
 
     def __print_to_file__(self, stack, out_file, message):
-        caller_file = stack.filename[Path(stack.filename).as_posix().index("/app/") :]
+        caller_file = Path(stack.filename)
+        try:
+            caller_file = caller_file.relative_to("/app")
+        except ValueError:
+            caller_file = caller_file.name
+
         now = datetime.utcnow()
 
-        with open(out_file, mode="a+") as log:
+        out_file_path = Path(out_file)
+        out_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with out_file_path.open(mode="a", encoding="utf-8") as log:
             log.write(
-                f"{now.strftime('%Y-%m-%d-%H:%M:%S')} -- {caller_file} -- line[{stack.lineno}] -- {message}\n"
+                f"{now:%Y-%m-%d %H:%M:%S} -- {caller_file} -- line[{stack.lineno}] -- {message}\n"
             )
 
 
