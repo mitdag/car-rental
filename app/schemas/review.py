@@ -20,3 +20,6 @@ class ReviewDisplay(BaseModel):
     rating: int
     comment: str
     review_date: datetime
+
+    class Config:
+        orm_mode = True
