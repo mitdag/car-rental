@@ -6,3 +6,4 @@ bcrypt
 python-multipart
 geopy
 python-jose
+pre-commit
