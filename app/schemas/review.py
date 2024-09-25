@@ -23,3 +23,21 @@ class ReviewDisplay(BaseModel):
 
     class Config:
         orm_mode = True
+
+class ReviewCreate(ReviewBase):
+    rental_id: int
+    reviewer_id: int
+    reviewee_id: int
+
+class ReviewUpdate(ReviewBase):
+    pass
+
+class ReviewResponse(ReviewBase):
+    review_id: int
+    rental_id: int
+    reviewer_id: int
+    reviewee_id: int
+    review_date: datetime
+
+    class Config:
+        orm_mode = True
