@@ -10,7 +10,7 @@ from app.models.user import DBUser
 from app.schemas.address import AddressProfile
 from app.schemas.enums import LoginMethod, UserType
 from app.schemas.user import UserProfile
-from app.services import address, car
+from app.services import address
 from app.services.address import update_user_address
 from app.utils.hash import Hash
 
@@ -37,7 +37,7 @@ def create_signup_validation_entry(email: str, password: str, db: Session):
         password=Hash.bcrypt(password),
         key=str(uuid.uuid4()),
         expires_at=datetime.datetime.utcnow()
-        + datetime.timedelta(days=CONFIRMATION_EXPIRE_PERIOD_IN_DAYS),
+                   + datetime.timedelta(days=CONFIRMATION_EXPIRE_PERIOD_IN_DAYS),
     )
     db.add(new_confirmation)
     db.commit()
@@ -120,10 +120,18 @@ def delete_user(user_id: int, db: Session):
         db.commit()
         result_address = address.delete_user_address(user_id, db)
         # TODO add delete car
-        result_car = car.delete_user_address(user_id, db)
+        # result_car = car.delete_cars(user_id, db)
         return {
             "user": "Deleted",
             "address": result_address,
             # "car": result_car
         }
     return {"user": "No such user"}
+
+
+def is_user_profile_complete(user_id, db):
+    user = db.query(DBUser).filter(user_id == DBUser.id).first()
+    if not user:
+        return False
+    else:
+        return user.phone_number != "" and user.is_verified and address.is_user_address_complete(user_id, db)
