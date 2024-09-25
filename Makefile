@@ -6,7 +6,7 @@ test:
 	pytest
 
 format:
-	ruff format *.py app/*.py
+	ruff format
 
 refactor: 
 	format lint
@@ -14,6 +14,6 @@ refactor:
 lint:
 	#pylint --disable=R,C --ignore-patterns=test_.*?py *.py app/*.py
 	#ruff linting is faster than pylpyint
-	ruff check *.py app/*.py
+	ruff check
 
 all: install lint test format

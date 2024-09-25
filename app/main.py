@@ -2,11 +2,9 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.auth import signup, login
-from app.core.database import Base
-from app.core.database import engine
-from app.routers import car
-from app.routers import user
+from app.auth import login, signup
+from app.core.database import Base, engine
+from app.routers import car, user
 
 app = FastAPI()
 
@@ -20,7 +18,7 @@ Base.metadata.create_all(engine)
 app.mount(
     "/static/templates/static",
     StaticFiles(directory="app/static/templates/static"),
-    name="static"
+    name="static",
 )
 # This code is here to run the app from pycharm
 if __name__ == "__main__":
