@@ -52,7 +52,8 @@ def create_signup_validation_entry(email: str, password: str, db: Session):
 # This function is called via user confirmation email.
 def create_signup_user_from_confirmation_mail(id: int, key: str, db: Session):
     confirmation = (
-        db.query(DBSignUpConfirmation).filter(id == DBSignUpConfirmation.id).first()
+        db.query(DBSignUpConfirmation).filter(
+            id == DBSignUpConfirmation.id and key == DBSignUpConfirmation.key).first()
     )
     if not confirmation:
         raise HTTPException(
@@ -83,8 +84,26 @@ def create_signup_user_from_confirmation_mail(id: int, key: str, db: Session):
     return {"result": True, "desc": user.email}
 
 
-def modify_user_profile(user_profile: UserProfile, db: Session):
-    user = db.query(DBUser).filter(user_profile.user_id == DBUser.id).first()
+def create_social_media_signup_user(email: str, login_method: LoginMethod, db: Session):
+    user = db.query(DBUser).filter(email == DBUser.email).first()
+    if user:
+        return {"result": False, "desc": "User already exists"}
+
+    user = DBUser(
+        email=email,
+        password=None,
+        login_method=login_method,
+        user_type=UserType.USER,
+        is_verified=True,
+    )
+    db.add(user)
+    db.commit()
+    db.flush(user)
+    return {"result": True, "desc": user.email}
+
+
+def modify_user_profile(user_id: int, user_profile: UserProfile, db: Session):
+    user = db.query(DBUser).filter(user_id == DBUser.id).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="User does not exist."
@@ -99,7 +118,7 @@ def modify_user_profile(user_profile: UserProfile, db: Session):
     db.flush(user)
 
     address_profile = update_user_address(
-        user_id=user_profile.user_id,
+        user_id=user_id,
         address_profile=AddressProfile(
             street=user_profile.street,
             number=user_profile.number,

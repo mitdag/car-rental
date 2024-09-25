@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2
@@ -12,20 +12,22 @@ from app.services import car, user
 router = APIRouter(prefix="/user", tags=["user"])
 
 
-@router.put("/profile")
+@router.put("/{user_id}/profile")
 def modify_user_profile(
         user_profile: UserProfile,
+        user_id: int = Path(...),
         db: Session = Depends(database.get_db),
         current_user=Depends(oauth2.get_current_user)
 ):
-    return user.modify_user_profile(user_profile, db)
+    return user.modify_user_profile(user_id, user_profile, db)
 
 
 @router.delete("/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(database.get_db)):
+def delete_user(user_id: int, db: Session = Depends(database.get_db), current_user=Depends(oauth2.get_current_user)):
     return user.delete_user(user_id, db)
 
-@router.get("/cars/{user_id}", response_model=List[CarDisplay])
+
+@router.get("/{user_id}/cars", response_model=List[CarDisplay])
 def read_cars_by_user(user_id: int, db: Session = Depends(database.get_db)):
     cars = car.get_cars_by_user(db, user_id)
     if not cars:

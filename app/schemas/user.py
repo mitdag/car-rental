@@ -34,7 +34,6 @@ class UserDisplay(BaseModel):
 
 
 class UserProfile(BaseModel):
-    user_id: int
     name: str
     last_name: str
     phone_number: str
