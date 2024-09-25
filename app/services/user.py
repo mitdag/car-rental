@@ -10,7 +10,7 @@ from app.models.user import DBUser
 from app.schemas.address import AddressProfile
 from app.schemas.enums import LoginMethod, UserType
 from app.schemas.user import UserProfile
-from app.services import address
+from app.services import address, car
 from app.services.address import update_user_address
 from app.utils.hash import Hash
 
@@ -98,7 +98,7 @@ def modify_user_profile(user_profile: UserProfile, db: Session):
     db.commit()
     db.flush(user)
 
-    update_user_address(
+    address_profile = update_user_address(
         user_id=user_profile.user_id,
         address_profile=AddressProfile(
             street=user_profile.street,
@@ -110,7 +110,7 @@ def modify_user_profile(user_profile: UserProfile, db: Session):
         ),
         db=db,
     )
-    return user_profile
+    return {"profile": user_profile, "address_confirmed": address_profile.address_confirmed}
 
 
 def delete_user(user_id: int, db: Session):
@@ -120,7 +120,7 @@ def delete_user(user_id: int, db: Session):
         db.commit()
         result_address = address.delete_user_address(user_id, db)
         # TODO add delete car
-        # result_car = car.delete_user_address(user_id, db)
+        result_car = car.delete_user_address(user_id, db)
         return {
             "user": "Deleted",
             "address": result_address,

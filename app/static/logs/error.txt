@@ -1,0 +1,3 @@
+2024-09-24-20:17:15 -- /app/utils/address_translation.py -- line[18] -- HTTP Error 400: Bad Request
+2024-09-24-20:44:37 -- /app/utils/logger.py -- line[31] -- ddd
+2024-09-24-20:45:02 -- /app/auth/login.py -- line[32] -- Login attempt with invalid credentials (string)

@@ -2,15 +2,23 @@ from typing import Dict
 
 from geopy.geocoders import Nominatim
 
+from app.utils.logger import logger
+
 geolocator = Nominatim(user_agent="car-rental", timeout=3)
 
 
 def address_to_lat_lon(address: Dict):
-    location = geolocator.geocode(address)
-    if location:
-        return {"latitude": location.latitude, "longitude": location.longitude}
-    else:
+    try:
+        location = geolocator.geocode(address)
+        if location:
+            return {"latitude": location.latitude, "longitude": location.longitude}
+        else:
+            return {"latitude": None, "longitude": None}
+    except Exception as exc:
+        logger.error(exc)
         return {"latitude": None, "longitude": None}
+<<<<<<< HEAD
+=======
 
 
 # print(address_to_lat_lon("175 5th Avenue NYC"))
@@ -25,3 +33,4 @@ def address_to_lat_lon(address: Dict):
 #   "country": "Netherlands"
 # }
 # ))
+>>>>>>> 62d5304c3a0d622f0b8bfad986e3b07621fd51fd
