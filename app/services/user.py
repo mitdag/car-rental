@@ -4,9 +4,7 @@ import uuid
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import select
 
-from app.models.address import DBAddress
 from app.models.signup_confirmations import DBSignUpConfirmation
 from app.models.user import DBUser
 from app.schemas.address import AddressProfile
@@ -55,10 +53,11 @@ def create_signup_validation_entry(email: str, password: str, db: Session):
 
 
 # This function is called via user confirmation email.
-def create_signup_user_from_confirmation_mail(id: int, key: str, db: Session):
+def create_signup_user_from_confirmation_mail(confirmation_id: int, key: str, db: Session):
     confirmation = (
-        db.query(DBSignUpConfirmation).filter(
-            id == DBSignUpConfirmation.id and key == DBSignUpConfirmation.key).first()
+        db.query(DBSignUpConfirmation)
+        .filter(confirmation_id == DBSignUpConfirmation.id and key == DBSignUpConfirmation.key)
+        .first()
     )
     if not confirmation:
         raise HTTPException(
@@ -122,7 +121,7 @@ def modify_user_profile(user_id: int, user_profile: UserProfile, db: Session):
     db.commit()
     db.flush(user)
 
-    address_profile = address.update_user_address(
+    address_profile = address_service.update_user_address(
         user_id=user_id,
         address_profile=AddressProfile(
             street=user_profile.street,
@@ -134,7 +133,10 @@ def modify_user_profile(user_id: int, user_profile: UserProfile, db: Session):
         ),
         db=db,
     )
-    return {"profile": user_profile, "address_confirmed": address_profile.address_confirmed}
+    return {
+        "profile": user_profile,
+        "address_confirmed": address_profile.address_confirmed,
+    }
 
 
 def delete_user(user_id: int, db: Session):
@@ -158,4 +160,8 @@ def is_user_profile_complete(user_id, db):
     if not user:
         return False
     else:
-        return user.phone_number != "" and user.is_verified and address.is_user_address_complete(user_id, db)
+        return (
+                user.phone_number != ""
+                and user.is_verified
+                and address_service.is_user_address_complete(user_id, db)
+        )

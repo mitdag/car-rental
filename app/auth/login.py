@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Body, HTTPException, status, Form
+from fastapi import APIRouter, Depends, HTTPException, status, Form
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -26,13 +26,17 @@ class OAuth2PasswordRequestFormCustom(OAuth2PasswordRequestForm):
 @router.post("/")
 def login(
         auth_form: OAuth2PasswordRequestFormCustom = Depends(),
-        db: Session = Depends(database.get_db)
+        db: Session = Depends(database.get_db),
 ):
     # TODO following line is for demo purposes on Swagger. login_method will be sent by backend
     # login_method = auth_form.login_method
     # login_method = LoginMethod.EMAIL if auth_form.password != "LOGIN_WITH_SOCIAL_MEDIA" \
     #     else LoginMethod(auth_form.login_method)
-    login_method = LoginMethod.EMAIL if not auth_form.login_method else LoginMethod(auth_form.login_method)
+    login_method = (
+        LoginMethod.EMAIL
+        if not auth_form.login_method
+        else LoginMethod(auth_form.login_method)
+    )
     if login_method == LoginMethod.EMAIL:
         if not auth_form.password or auth_form.password == "":
             raise HTTPException(
@@ -43,14 +47,27 @@ def login(
         try:
             app_user = user_service.get_user_by_email(auth_form.username, db)
             if not app_user or not Hash.verify(auth_form.password, app_user.password):
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid credentials",
+                )
         except Exception:
-            logger.error(f"Login attempt with invalid credentials ({auth_form.username})")
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid credentials")
+            logger.error(
+                f"Login attempt with invalid credentials ({auth_form.username})"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Invalid credentials"
+            )
     else:
         user = user_service.get_user_by_email(auth_form.username, db)
         if not user:
-            user_service.create_social_media_signup_user(auth_form.username, login_method, db)
+            user_service.create_social_media_signup_user(
+                auth_form.username, login_method, db
+            )
 
     access_token = oauth2.create_access_token({"username": auth_form.username})
-    return {"access_token": access_token, "token_type": "bearer", "user": f"{auth_form.username}"}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": f"{auth_form.username}",
+    }

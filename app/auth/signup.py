@@ -35,11 +35,11 @@ def signup(
 @router.get("/confirm", response_class=HTMLResponse)
 def signup_confirmation(
         request: Request,
-        id: int = Query(...),
+        confirmation_id: int = Query(...),
         key: str = Query(...),
         db: Session = Depends(database.get_db),
 ):
-    result = user_service.create_signup_user_from_confirmation_mail(id, key, db)
+    result = user_service.create_signup_user_from_confirmation_mail(confirmation_id, key, db)
     if result["result"]:
         title = "Signup Completed"
         message = "Thank you for signing up. You can login and enjoy our app now!"

@@ -12,7 +12,11 @@ router = APIRouter(prefix="/car", tags=["car"])
 
 
 @router.post("/", response_model=CarDisplay)
-def create_car(request: CarBase, db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
+def create_car(
+    request: CarBase,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
     return car.create_car(db, request)
 
 
@@ -27,11 +31,19 @@ def read_car(car_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{car_id}")
-def update_car(car_id: int, request: CarBase, db: Session = Depends(get_db),
-               current_user=Depends(oauth2.get_current_user)):
+def update_car(
+    car_id: int,
+    request: CarBase,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
     return car.update_car(db, car_id, request)
 
 
 @router.delete("/{car_id}")
-def delete_car(car_id: int, db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
+def delete_car(
+    car_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
     return car.delete_car(db, car_id)
