@@ -20,7 +20,7 @@ def create_car(
     return car.create_car(db, request)
 
 
-@router.get("/", response_model=List[CarDisplay])
+@router.get("/", response_model=List[CarBase])
 def read_cars(db: Session = Depends(get_db)):
     return car.get_cars(db)
 
