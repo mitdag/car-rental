@@ -8,7 +8,21 @@ from typing import Dict
 def send_signup_confirmation_email(
     receiver_address: str, path: str, params: Dict, expires: int
 ):
-    print("Thank you for signing up Car Rental App")
-    print("Please click the following link to confirm:")
-    print(f"{path}?{urlencode(params)}")
-    print(f"(This link expires in {expires} day(s)")
+    line_length = 120
+    url = f"{path}?{urlencode(params)}"
+    exp = f"(This link expires in {expires} day(s))"
+    print("\n\n")
+    print(f"{(str('')):*>{line_length}}")
+    print(f"**{(str('C O N F I R M T I O N     M A I L')): ^{line_length - 4}}**")
+    print(f"{(str('')):*>{line_length}}")
+    print(f"**{(str('**')): >{line_length - 2}}")
+    print(f"**{(str('Thank you for signing up Car Rental App')): ^{line_length - 4}}**")
+    print(
+        f"**{(str('Please click the following link to confirm your signup:')): ^{line_length - 4}}**"
+    )
+    print(f"**{(str('**')): >{line_length - 2}}")
+    print(f"**{url: ^{line_length - 4}}**")
+    print(f"**{(str('**')): >{line_length - 2}}")
+    print(f"**{exp: ^{line_length - 4}}**")
+    print(f"{(str('')):*>{line_length}}")
+    print("\n\n")
