@@ -12,7 +12,7 @@ class CarBase(BaseModel):
     motor_type: str
     price_per_day: float
     description: Optional[str] = None
-    is_listed: Optional[bool] = True
+    is_listed: bool = True
 
 
 class CarDisplay(BaseModel):
