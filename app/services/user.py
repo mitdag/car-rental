@@ -18,21 +18,23 @@ CONFIRMATION_EXPIRE_PERIOD_IN_DAYS = 1
 
 def get_user_by_id(user_id: int, db: Session):
     user = db.query(DBUser).filter(DBUser.id == user_id).first()
-    # user = db.execute(select("*")
-    #                   .join_from(DBUser, DBAddress)
-    #                   .where(DBUser.id == DBAddress.user_id)).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist.")
     return user
 
 
 def get_user_by_email(email: str, db: Session):
-    return db.query(DBUser).filter(DBUser.email == email).first()
+    user = db.query(DBUser).filter(DBUser.email == email).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist.")
+    return user
 
 
 def create_signup_validation_entry(email: str, password: str, db: Session):
     user = db.query(DBUser).filter(email == DBUser.email).first()
     if user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="user exists"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists"
         )
 
     new_confirmation = DBSignUpConfirmation(
@@ -61,7 +63,7 @@ def create_signup_user_from_confirmation_mail(confirmation_id: int, key: str, db
     )
     if not confirmation:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="No such user"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User does not exist."
         )
 
     confirmation_email = confirmation.email
@@ -141,18 +143,14 @@ def modify_user_profile(user_id: int, user_profile: UserProfile, db: Session):
 
 def delete_user(user_id: int, db: Session):
     user = db.query(DBUser).filter(user_id == DBUser.id).first()
-    if user:
-        db.delete(user)
-        db.commit()
-        result_address = address_service.delete_user_address(user_id, db)
-        # TODO add delete car
-        # result_car = car.delete_cars(user_id, db)
-        return {
-            "user": "Deleted",
-            "address": result_address,
-            # "car": result_car
-        }
-    return {"user": "No such user"}
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User does not exist."
+        )
+
+    db.delete(user)
+    db.commit()
+    return "Deleted"
 
 
 def is_user_profile_complete(user_id, db):

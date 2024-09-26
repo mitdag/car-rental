@@ -34,15 +34,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 
 def get_current_user(
-    token_enc: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)
+        token_enc: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)
 ):
     credential_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not verify credentials",
+        detail="Could not verify credentials (credentials might have expired)",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    token = jwt.decode(token_enc, SECRET_KEY, algorithms=ALGORITHM)
+
     try:
+        token = jwt.decode(token_enc, SECRET_KEY, algorithms=ALGORITHM)
         user_email = token.get("username")
         current_user = user.get_user_by_email(user_email, db)
         if not current_user:

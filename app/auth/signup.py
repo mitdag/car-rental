@@ -24,7 +24,7 @@ def signup(
     email_sender.send_signup_confirmation_email(
         receiver_address=email,
         path="http://127.0.0.1:8000/signup/confirm",
-        params={"key": entry["key"], "id": entry["id"]},
+        params={"key": entry["key"], "confirmation_id": entry["id"]},
         expires=entry["expires_in"],
     )
     return Response(

@@ -1,6 +1,7 @@
 import datetime
 
 from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
 
 from app.models.address import DBAddress
 from app.schemas.address import AddressProfile
@@ -8,7 +9,10 @@ from app.utils.address_translation import address_to_lat_lon
 
 
 def get_address_by_user_id(user_id: int, db: Session):
-    return db.query(DBAddress).filter(user_id == DBAddress.user_id).first()
+    address = db.query(DBAddress).filter(user_id == DBAddress.user_id).first()
+    if not address:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No address for the user")
+    return address
 
 
 def update_user_address(user_id: int, address_profile: AddressProfile, db: Session):
@@ -49,12 +53,12 @@ def update_user_address(user_id: int, address_profile: AddressProfile, db: Sessi
 
 def delete_user_address(user_id: int, db: Session):
     address = db.query(DBAddress).filter(user_id == DBAddress.user_id).first()
-    if address:
-        db.delete(address)
-        db.commit()
-        return "deleted"
-    return "No address for the user"
-
+    if not address:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No address for the user")
+    db.delete(address)
+    db.commit()
+    return "deleted"
+    
 
 def is_user_address_complete(user_id, db):
     address = db.query(DBAddress).filter(user_id == DBAddress.user_id).first()
