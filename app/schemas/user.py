@@ -43,3 +43,6 @@ class UserProfile(BaseModel):
     city: str
     state: str
     country: str
+
+    class Config:
+        orm_mode = True

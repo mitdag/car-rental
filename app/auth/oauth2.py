@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core import database
 from app.services import user
+from app.utils.logger import logger
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -44,6 +45,7 @@ def get_current_user(token_enc: str = Depends(oauth2_scheme), db: Session = Depe
         current_user = user.get_user_by_email(user_email, db)
         if not current_user:
             raise Exception()
-    except:
+    except Exception:
+        logger.error("Could not authenticate")
         raise credential_exception
     return current_user

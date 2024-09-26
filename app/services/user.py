@@ -4,21 +4,26 @@ import uuid
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
+from app.models.address import DBAddress
 from app.models.signup_confirmations import DBSignUpConfirmation
 from app.models.user import DBUser
 from app.schemas.address import AddressProfile
 from app.schemas.enums import LoginMethod, UserType
 from app.schemas.user import UserProfile
-from app.services import address
-from app.services.address import update_user_address
+from app.services import address as address_service
 from app.utils.hash import Hash
 
 CONFIRMATION_EXPIRE_PERIOD_IN_DAYS = 1
 
 
 def get_user_by_id(user_id: int, db: Session):
-    return db.query(DBUser).filter(DBUser.id == user_id).first()
+    user = db.query(DBUser).filter(DBUser.id == user_id).first()
+    # user = db.execute(select("*")
+    #                   .join_from(DBUser, DBAddress)
+    #                   .where(DBUser.id == DBAddress.user_id)).first()
+    return user
 
 
 def get_user_by_email(email: str, db: Session):
@@ -117,7 +122,7 @@ def modify_user_profile(user_id: int, user_profile: UserProfile, db: Session):
     db.commit()
     db.flush(user)
 
-    address_profile = update_user_address(
+    address_profile = address.update_user_address(
         user_id=user_id,
         address_profile=AddressProfile(
             street=user_profile.street,
@@ -137,7 +142,7 @@ def delete_user(user_id: int, db: Session):
     if user:
         db.delete(user)
         db.commit()
-        result_address = address.delete_user_address(user_id, db)
+        result_address = address_service.delete_user_address(user_id, db)
         # TODO add delete car
         # result_car = car.delete_cars(user_id, db)
         return {
