@@ -14,10 +14,10 @@ router = APIRouter(prefix="/login", tags=["signup/login"])
 
 class OAuth2PasswordRequestFormCustom(OAuth2PasswordRequestForm):
     def __init__(
-            self,
-            login_method: int = Form(1),  # Expecting login_method as form input
-            username: str = Form(...),
-            password: str = Form(None),
+        self,
+        login_method: int = Form(1),  # Expecting login_method as form input
+        username: str = Form(...),
+        password: str = Form(None),
     ):
         super().__init__(username=username, password=password)
         self.login_method = login_method
@@ -25,8 +25,8 @@ class OAuth2PasswordRequestFormCustom(OAuth2PasswordRequestForm):
 
 @router.post("/")
 def login(
-        auth_form: OAuth2PasswordRequestFormCustom = Depends(),
-        db: Session = Depends(database.get_db),
+    auth_form: OAuth2PasswordRequestFormCustom = Depends(),
+    db: Session = Depends(database.get_db),
 ):
     # TODO following line is for demo purposes on Swagger. login_method will be sent by backend
     # login_method = auth_form.login_method
@@ -66,6 +66,7 @@ def login(
             )
 
     access_token = oauth2.create_access_token({"username": auth_form.username})
+    user_service.update_user_login(auth_form.username, db)
     return {
         "access_token": access_token,
         "token_type": "bearer",

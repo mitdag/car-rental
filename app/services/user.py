@@ -19,15 +19,28 @@ CONFIRMATION_EXPIRE_PERIOD_IN_DAYS = 1
 def get_user_by_id(user_id: int, db: Session):
     user = db.query(DBUser).filter(DBUser.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist."
+        )
     return user
 
 
 def get_user_by_email(email: str, db: Session):
     user = db.query(DBUser).filter(DBUser.email == email).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist."
+        )
     return user
+
+
+def get_users(db: Session, skip: int, limit: int = 20):
+    if skip < 0 or limit < 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Skip and limit must be positive integers",
+        )
+    return db.query(DBUser).offset(skip).limit(limit).all()
 
 
 def create_signup_validation_entry(email: str, password: str, db: Session):
@@ -42,7 +55,7 @@ def create_signup_validation_entry(email: str, password: str, db: Session):
         password=Hash.bcrypt(password),
         key=str(uuid.uuid4()),
         expires_at=datetime.datetime.utcnow()
-                   + datetime.timedelta(days=CONFIRMATION_EXPIRE_PERIOD_IN_DAYS),
+        + datetime.timedelta(days=CONFIRMATION_EXPIRE_PERIOD_IN_DAYS),
     )
     db.add(new_confirmation)
     db.commit()
@@ -55,10 +68,15 @@ def create_signup_validation_entry(email: str, password: str, db: Session):
 
 
 # This function is called via user confirmation email.
-def create_signup_user_from_confirmation_mail(confirmation_id: int, key: str, db: Session):
+def create_signup_user_from_confirmation_mail(
+    confirmation_id: int, key: str, db: Session
+):
     confirmation = (
         db.query(DBSignUpConfirmation)
-        .filter(confirmation_id == DBSignUpConfirmation.id and key == DBSignUpConfirmation.key)
+        .filter(
+            confirmation_id == DBSignUpConfirmation.id
+            and key == DBSignUpConfirmation.key
+        )
         .first()
     )
     if not confirmation:
@@ -159,7 +177,15 @@ def is_user_profile_complete(user_id, db):
         return False
     else:
         return (
-                user.phone_number != ""
-                and user.is_verified
-                and address_service.is_user_address_complete(user_id, db)
+            user.phone_number != ""
+            and user.is_verified
+            and address_service.is_user_address_complete(user_id, db)
         )
+
+
+def update_user_login(email: str, db: Session):
+    user = get_user_by_email(email, db)
+    if user:
+        user.last_login = datetime.datetime.now()
+        db.commit()
+    return user

@@ -4,17 +4,32 @@ from pathlib import Path
 from typing import List
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from fastapi import Path as FastAPI_Path
+from fastapi import Path as FastAPI_Path, status
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2
 from app.core import database
 from app.schemas.car import CarDisplay
+from app.schemas.enums import UserType
 from app.schemas.user import UserDisplay, UserProfile
 from app.services import car as car_service
 from app.services import user as user_service
 
 router = APIRouter(prefix="/user", tags=["user"])
+
+
+@router.get("/all", response_model=List[UserDisplay])
+def get_users(
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(database.get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Admin only endpoint"
+        )
+    return user_service.get_users(db, skip, limit)
 
 
 @router.get("/{user_id}", response_model=UserDisplay)

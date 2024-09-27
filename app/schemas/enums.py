@@ -9,5 +9,5 @@ class LoginMethod(Enum):
 
 
 class UserType(Enum):
-    USER = (1,)
+    USER = 1
     ADMIN = 2

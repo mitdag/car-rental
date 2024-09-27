@@ -13,8 +13,6 @@ class UserBase(BaseModel):
     password: str = None
     login_method: LoginMethod
     phone_number: str = None
-    address_lat: float = None
-    address_lon: float = None
     user_type: UserType
     is_verified: bool = False
     created_at: datetime = time.time()
@@ -32,7 +30,7 @@ class UserDisplay(BaseModel):
     is_verified: bool = False
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UserProfile(BaseModel):
@@ -48,4 +46,4 @@ class UserProfile(BaseModel):
     country: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
