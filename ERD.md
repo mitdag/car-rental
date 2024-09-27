@@ -3,7 +3,7 @@ erDiagram
     User ||--o{ Car : owns
     User ||--o{ Rental : rents
     User {
-        int user_id PK
+        int id PK
         string name
         string email
         string password
@@ -18,7 +18,7 @@ erDiagram
     Car ||--o{ Rental : "is rented in"
     Car ||--o{ Favorite : "is favorited in"
     Car {
-        int car_id PK
+        int id PK
         int owner_id FK
         string make
         string model
@@ -30,7 +30,7 @@ erDiagram
         boolean is_listed
     }
     Rental {
-        int rental_id PK
+        int id PK
         int car_id FK
         int renter_id FK
         date start_date
@@ -39,7 +39,7 @@ erDiagram
         string status
     }
     Payment {
-        int payment_id PK
+        int id PK
         int rental_id FK
         float amount
         string payment_method
@@ -47,7 +47,7 @@ erDiagram
         string status
     }
     Review {
-        int review_id PK
+        int id PK
         int rental_id FK
         int reviewer_id FK
         int reviewee_id FK
@@ -56,19 +56,19 @@ erDiagram
         datetime review_date
     }
     Favorite {
-        int favorite_id PK
+        int id PK
         int user_id FK
         int car_id FK
     }
     Notification {
-        int notification_id PK
+        int id PK
         int user_id FK
         text message
         datetime created_at
         boolean is_read
     }
     Dispute {
-        int dispute_id PK
+        int id PK
         int rental_id FK
         int reporter_id FK
         text description
