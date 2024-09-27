@@ -3,21 +3,16 @@ import shutil
 from pathlib import Path
 from typing import List
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Path as FastAPI_Path,
-    UploadFile,
-    File,
-)
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import Path as FastAPI_Path
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2
 from app.core import database
 from app.schemas.car import CarDisplay
-from app.schemas.user import UserProfile, UserDisplay
-from app.services import car as car_service, user as user_service
+from app.schemas.user import UserDisplay, UserProfile
+from app.services import car as car_service
+from app.services import user as user_service
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -68,7 +63,7 @@ def delete_user(
         return user_service.delete_user(user_id, db)
 
 
-@router.get("/{user_id}/cars", response_model=List[CarDisplay])
+@router.get("/{user_id}/cars", response_model=List[CarDisplay], tags=["user", "car"])
 def read_cars_by_user(
     user_id: int = FastAPI_Path(...), db: Session = Depends(database.get_db)
 ):
