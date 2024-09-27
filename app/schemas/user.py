@@ -6,6 +6,7 @@ from app.schemas.enums import LoginMethod, UserType
 
 
 class UserBase(BaseModel):
+    id: int
     name: str = None
     last_name: str = None
     email: str
@@ -21,6 +22,7 @@ class UserBase(BaseModel):
 
 
 class UserDisplay(BaseModel):
+    id: int
     name: str = None
     last_name: str = None
     email: str
@@ -34,6 +36,7 @@ class UserDisplay(BaseModel):
 
 
 class UserProfile(BaseModel):
+    id: int
     name: str
     last_name: str
     phone_number: str

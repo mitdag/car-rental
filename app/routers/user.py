@@ -34,7 +34,8 @@ def modify_user_profile(
     db: Session = Depends(database.get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
-    return user_service.modify_user_profile(user_id, user_profile, db)
+    if oauth2.can_call_this_api(current_user, user_id):
+        return user_service.modify_user_profile(user_id, user_profile, db)
 
 
 @router.post("/{user_id}/profile-picture")
@@ -43,17 +44,18 @@ def upload_profile_picture(
     picture: UploadFile = File(...),
     current_user=Depends(oauth2.get_current_user),
 ):
-    current_dir = Path(os.path.dirname(__file__)).as_posix()
-    pictures_path = (
-        current_dir[: current_dir.rindex("/")] + "/static/images/profile-pictures"
-    )
-    # TODO frontend must control the picture file has an extension
-    _, upload_file_ext = os.path.splitext(picture.filename)
-    file_name = f"user_{(str(user_id)):0>6}{upload_file_ext}"
+    if oauth2.can_call_this_api(current_user, user_id):
+        current_dir = Path(os.path.dirname(__file__)).as_posix()
+        pictures_path = (
+            current_dir[: current_dir.rindex("/")] + "/static/images/profile-pictures"
+        )
+        # TODO frontend must control the picture file has an extension
+        _, upload_file_ext = os.path.splitext(picture.filename)
+        file_name = f"user_{(str(user_id)):0>6}{upload_file_ext}"
 
-    with open(f"{pictures_path}/{file_name}", "w+b") as buffer:
-        shutil.copyfileobj(picture.file, buffer)
-    return {"file-name": file_name, "file-type": picture.content_type}
+        with open(f"{pictures_path}/{file_name}", "w+b") as buffer:
+            shutil.copyfileobj(picture.file, buffer)
+        return {"file-name": file_name, "file-type": picture.content_type}
 
 
 @router.delete("/{user_id}")
@@ -62,7 +64,8 @@ def delete_user(
     db: Session = Depends(database.get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
-    return user_service.delete_user(user_id, db)
+    if oauth2.can_call_this_api(current_user, user_id):
+        return user_service.delete_user(user_id, db)
 
 
 @router.get("/{user_id}/cars", response_model=List[CarDisplay])
