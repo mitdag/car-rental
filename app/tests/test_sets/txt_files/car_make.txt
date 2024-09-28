@@ -1,0 +1,48 @@
+Lincoln
+Ford
+Alfa Romeo
+Bentley
+Mercedes 140
+Volkswagen
+GMC
+Volvo90
+Skoda
+Mitsubishi
+Fiat
+Toyota
+Infiniti80
+Renault
+Suzuki
+Land Rover
+Nissan
+Tesla 3
+Porsche
+Chrysler
+Kia
+Maserati
+Lamborghini
+Genesis70
+Rolls Royce
+Audi7
+Subaru
+Citroen3
+Honda-V
+Lotus
+McLaren
+Mazda3
+Buick
+Jeep
+Bugatti
+BMW5
+Opel
+Ram
+Cadillac
+Chevrolet
+Dodge
+Hyundai
+Jaguar
+Aston Martin
+Acura
+Peugeot
+Mini
+Ferrari

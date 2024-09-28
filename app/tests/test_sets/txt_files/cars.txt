@@ -1,0 +1,48 @@
+Lincoln --------- MKZ
+Ford --------- Mustang
+Alfa Romeo --------- Stelvio
+Bentley --------- Continental
+Mercedes --------- A 140
+Volkswagen --------- Golf
+GMC --------- Canyon
+Volvo --------- S90
+Skoda --------- Kodiaq
+Mitsubishi --------- Lancer
+Fiat --------- Punto
+Toyota --------- Yaris
+Infiniti --------- QX80
+Renault --------- Megane
+Suzuki --------- Vitara
+Land Rover --------- Defender
+Nissan --------- Leaf
+Tesla --------- Model 3
+Porsche --------- Panamera
+Chrysler --------- Voyager
+Kia --------- Rio
+Maserati --------- Quattroporte
+Lamborghini --------- Aventador
+Genesis --------- G70
+Rolls Royce --------- Wraith
+Audi --------- Q7
+Subaru --------- Outback
+Citroen --------- DS3
+Honda --------- CR-V
+Lotus --------- Evora
+McLaren --------- 650S
+Mazda --------- Mazda3
+Buick --------- Encore
+Jeep --------- Wrangler
+Bugatti --------- Veyron
+BMW --------- X5
+Opel --------- Mokka
+Ram --------- 2500
+Cadillac --------- Escalade
+Chevrolet --------- Spark
+Dodge --------- Challenger
+Hyundai --------- Sonata
+Jaguar --------- XF
+Aston Martin --------- Vantage
+Acura --------- RDX
+Peugeot --------- 508
+Mini --------- Cooper
+Ferrari --------- Roma

@@ -7,13 +7,21 @@ Some actions require user authentication.
 """
 
 from typing import List
+from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2
 from app.core.database import get_db
 from app.schemas.car import CarBase, CarDisplay
+from app.schemas import constants
+from app.schemas.enums import (
+    CarSearchSortType,
+    CarSearchSortDirection,
+    CarEngineType,
+    CarTransmissionType,
+)
 from app.services import car
 
 router = APIRouter(prefix="/car", tags=["car"])
@@ -61,6 +69,65 @@ def read_cars(db: Session = Depends(get_db)) -> List[CarBase]:
         List[CarBase]: A list of all cars in the database.
     """
     return car.get_cars(db)
+
+
+@router.get(
+    path="/search",
+    summary="Search cars",
+    description="Filter car search based on distance, city, booking periods, engine type"
+    " transmission type, price and make. Sort result accordingly.",
+)
+def search_car(
+    distance_km: float = Query(
+        default=None,
+        description="Radius of the search in kilometers "
+        "(ignored if search_in_city is also set)",
+    ),
+    search_in_city: str = Query(default=None, description="Name of the city to search"),
+    renter_lat: float = Query(None, description="Latitude of the user's location"),
+    renter_lon: float = Query(None, description="Longitude of the user's location"),
+    booking_date_start: datetime = Query(
+        None, description="Start day of the booking. (NOT IMPLEMENTED YET)"
+    ),
+    booking_date_end: datetime = Query(
+        None, description="End day of the booking. (NOT IMPLEMENTED YET)"
+    ),
+    engine_type: str = Query(
+        None, description=f"Any of the types {CarEngineType.list()}"
+    ),
+    transmission_type: str = Query(
+        None, description=f"Any of the types {CarTransmissionType.list()}"
+    ),
+    price_min: int = Query(None, description="Minimum daily price for the rent"),
+    price_max: int = Query(None, description="Maximum daily price for the rent"),
+    make: str = Query(None, description="Make of the car"),
+    sort: CarSearchSortType = Query(None, description="Sort parameter"),
+    sort_direction: CarSearchSortDirection = Query(None, description="Sort direction"),
+    skip: int = Query(default=0, description="Used for pagination for the requests."),
+    limit: int = Query(
+        constants.QUERY_LIMIT_DEFAULT,
+        description=f"Length of the response " f"list {constants.QUERY_LIMIT_MAX}",
+    ),
+    db: Session = Depends(get_db),
+):
+    return car.search_cars(
+        distance_km=distance_km,
+        renter_lat=renter_lat,
+        renter_lon=renter_lon,
+        booking_date_start=booking_date_start,
+        booking_date_end=booking_date_end,
+        search_in_city=search_in_city,
+        engine_type=engine_type,
+        transmission_type=transmission_type,
+        price_min=price_min,
+        price_max=price_max,
+        make=make,
+        sort=sort,
+        sort_direction=sort_direction,
+        skip=skip,
+        limit=min(limit, constants.QUERY_LIMIT_MAX),
+        db=db,
+    )
 
 
 @router.get(

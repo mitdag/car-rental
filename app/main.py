@@ -4,7 +4,8 @@ from fastapi.staticfiles import StaticFiles
 
 from app.auth import login, signup
 from app.core.database import Base, engine
-from app.routers import car, user, review
+from app.routers import car, user
+from app.tests.test_sets import create_test_db
 
 app = FastAPI()
 
@@ -12,7 +13,8 @@ app.include_router(login.router)
 app.include_router(signup.router)
 app.include_router(user.router)
 app.include_router(car.router)
-app.include_router(review.router)
+# app.include_router(review.router)
+app.include_router(create_test_db.router)
 
 Base.metadata.create_all(engine)
 

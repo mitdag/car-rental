@@ -1,0 +1,78 @@
+Adriaan Coenenstraat
+Ankerstraat
+Badhuiskade
+Badhuisstraat
+Badhuisweg
+Berkenbosch Blokstraat
+Binnenhof
+Boegstraat
+Cornelis Jolstraat
+Dirk Hoogenraadstraat
+Drogersdijk
+Duinstraat
+Gondelstraat
+Haringstraat
+Havenkade
+Heemraadstraat
+Hellingweg
+Hoge Prins Willemstraat
+IJmuidenstraat
+Jacob Pronkstraat
+Jacob Vermijstraat
+Jan Kistenstraat
+Jongeneelstraat
+Jurriaan Kokstraat
+Kanaalweg
+Katwijkstraat
+Keizerstraat
+Kerklaan
+Kolenwagenslag
+Kompasstraat
+Koppelstokstraat
+Korbootstraat
+Korendijkstraat
+Kotterstraat
+Loggerstraat
+Maaswijkstraat
+Marcelisstraat
+Menninckstraat
+Messstraat
+Neptunusstraat
+Nieuwe Laantjes
+Noordwijkstraat
+Ooststraat
+Pansierstraat
+Reepstraat
+Renbaanstraat
+Rijslag
+Roerstraat
+Rogstraat
+Rotterdamsestraat
+Rusthoekstraat
+Scheveningseslag
+Schipperstraat
+Schokkerweg
+Schuitenweg
+Seinpostduin
+Seinpoststraat
+Sloepstraat
+Symonszstraat
+Treilerdwarsweg
+Treilerweg
+Van Tuyllstraat
+Vermaasstraat
+Vijzelstraat
+Visafslagweg
+Vissershavenstraat
+Vissershavenweg
+Vlagstraat
+Wassenaarsestraat
+Weststraat
+Willem Beukelszoonplein
+Willem Beukelszoonstraat
+Willem Kuijperstraat
+Wimpelstraat
+Zandvoortstraat
+Zeeruststraat
+Zeesluisweg
+Zwaardstraat
