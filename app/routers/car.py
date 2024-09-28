@@ -106,7 +106,7 @@ def search_car(
     skip: int = Query(default=0, description="Used for pagination for the requests."),
     limit: int = Query(
         constants.QUERY_LIMIT_DEFAULT,
-        description=f"Length of the response " f"list {constants.QUERY_LIMIT_MAX}",
+        description=f"Length of the response list (max: {constants.QUERY_LIMIT_MAX})",
     ),
     db: Session = Depends(get_db),
 ):

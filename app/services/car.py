@@ -110,7 +110,10 @@ def search_cars(
         and not price_min
         and not price_max
     ):
-        return get_cars(db=db)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Specify at least one search parameter",
+        )
     if distance_km and not search_in_city and (not renter_lat or not renter_lon):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -209,11 +212,19 @@ def search_cars(
     if booking_date_start:
         # TODO implement after rental
         pass
-    result = db.execute(
-        select(*queries)
-        .where(and_(*where_clause))
-        .order_by(sort_by)
-        .offset(skip)
-        .limit(limit)
+    result = (
+        db.execute(
+            select(*queries)
+            .where(and_(*where_clause))
+            .order_by(sort_by)
+            .offset(skip)
+            .limit(limit)
+        )
+        .mappings()
+        .all()
     )
-    return result.mappings().all()
+
+    return {
+        "cars": result,
+        "next_offset": (skip + limit) if len(result) == limit else None,
+    }

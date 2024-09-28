@@ -40,7 +40,11 @@ def get_users(db: Session, skip: int, limit: int = 20):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Skip and limit must be positive integers",
         )
-    return db.query(DBUser).offset(skip).limit(limit).all()
+    result = db.query(DBUser).offset(skip).limit(limit).all()
+    return {
+        "users": result,
+        "next_offset": (skip + limit) if len(result) == limit else None,
+    }
 
 
 def create_signup_validation_entry(email: str, password: str, db: Session):

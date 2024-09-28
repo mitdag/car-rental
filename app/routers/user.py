@@ -3,12 +3,13 @@ import shutil
 from pathlib import Path
 from typing import List
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Query
 from fastapi import Path as FastAPI_Path, status
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2
 from app.core import database
+from app.schemas import constants
 from app.schemas.car import CarDisplay
 from app.schemas.enums import UserType
 from app.schemas.user import UserDisplay, UserProfile
@@ -20,8 +21,11 @@ router = APIRouter(prefix="/user", tags=["user"])
 
 @router.get("/all", response_model=List[UserDisplay])
 def get_users(
-    skip: int = 0,
-    limit: int = 20,
+    skip: int = Query(0, description="Offset start number."),
+    limit: int = Query(
+        default=constants.QUERY_LIMIT_DEFAULT,
+        description=f"Length of the response list (max: {constants.QUERY_LIMIT_MAX})",
+    ),
     db: Session = Depends(database.get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -29,7 +33,7 @@ def get_users(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Admin only endpoint"
         )
-    return user_service.get_users(db, skip, limit)
+    return user_service.get_users(db, skip, min(limit, constants.QUERY_LIMIT_MAX))
 
 
 @router.get("/{user_id}", response_model=UserDisplay)
