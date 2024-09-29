@@ -18,3 +18,6 @@ class DBCar(Base):
     description = Column(Text)
     is_listed = Column(Boolean, default=True)
     owner = relationship("DBUser", back_populates="cars")
+    favorited_by = relationship(
+        "DBUser", secondary="favorites", back_populates="user_favorites"
+    )

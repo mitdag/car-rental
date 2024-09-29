@@ -25,3 +25,6 @@ class DBUser(Base):
         "DBAddress", back_populates="user", cascade="all, delete-orphan"
     )
     cars = relationship("DBCar", back_populates="owner", cascade="all, delete-orphan")
+    user_favorites = relationship(
+        "DBCar", secondary="favorites", back_populates="favorited_by"
+    )
