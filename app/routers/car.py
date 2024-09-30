@@ -9,7 +9,7 @@ Some actions require user authentication.
 from datetime import datetime
 from typing import List
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2
@@ -209,4 +209,14 @@ def delete_car(
     Returns:
         Any: The result of the delete operation.
     """
+    db_car = car.get_car(db, car_id)
+
+    # Check if the current user is the owner of the car
+    if db_car.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to delete this car",
+        )
+
+    # Proceed to delete the car if authorized
     return car.delete_car(db, car_id)

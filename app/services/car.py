@@ -1,18 +1,17 @@
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
 
 from fastapi import HTTPException, status
+from sqlalchemy import and_, func, literal_column, select
 from sqlalchemy.orm import Session
-from sqlalchemy import select, literal_column, and_, func
 
 from app.models.address import DBAddress
 from app.models.car import DBCar
 from app.models.user import DBUser
 from app.schemas.car import CarBase
-from app.schemas.enums import CarSearchSortType, CarSearchSortDirection
+from app.schemas.enums import CarSearchSortDirection, CarSearchSortType
 from app.services.user import get_user_by_id
 from app.utils.logger import logger
-
 
 # Database Operations
 
