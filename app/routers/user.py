@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import oauth2
 from app.core import database
-from app.schemas import constants
+from app.utils import constants
 from app.schemas.car import CarDisplay
 from app.schemas.enums import UserType
 from app.schemas.user import UserDisplay, UserProfileForm, UserBase

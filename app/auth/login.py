@@ -1,11 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Form
+from typing_extensions import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status, Form, Request, Query
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import HTMLResponse
 
+import app.core.config
+from app.services import user_auth_service
 from app.auth import oauth2
 from app.core import database
 from app.schemas.enums import LoginMethod
 from app.services import user as user_service
+from app.utils import email_sender
 from app.utils.hash import Hash
 from app.utils.logger import logger
 
@@ -63,14 +69,78 @@ def login(
     else:
         user = user_service.get_user_by_email(auth_form.username, db)
         if not user:
-            user_service.create_social_media_signup_user(
+            user_auth_service.create_social_media_signup_user(
                 auth_form.username, login_method, db
             )
 
     access_token = oauth2.create_access_token({"username": auth_form.username})
-    user_service.update_user_login(auth_form.username, db)
+    user_auth_service.update_user_login(auth_form.username, db)
     return {
         "access_token": access_token,
         "token_type": "bearer",
         "user": f"{auth_form.username}",
     }
+
+
+@router.post("/forgot-password")
+def forgot_password(email: str, db: Session = Depends(database.get_db)):
+    entry = user_auth_service.create_forgot_password_validation_entry(email, db)
+    email_sender.send_forgot_password_email(
+        receiver_address=email,
+        path="http://127.0.0.1:8000/login/change-password/confirm",
+        params={"key": entry["key"], "confirm_id": entry["id"]},
+        expires=entry["expires_in"],
+    )
+    return {
+        "status_code": status.HTTP_200_OK,
+        "content": "Change password email has been sent",
+    }
+
+
+@router.get("/change-password/confirm", response_class=HTMLResponse)
+def change_password(
+    request: Request,
+    confirm_id: int = Query(...),
+    key: str = Query(...),
+    db: Session = Depends(database.get_db),
+):
+    result = user_auth_service.check_change_password_link_validity(confirm_id, key, db)
+    if result["result"]:
+        return app.core.config.templates.TemplateResponse(
+            "change_password.html",
+            {
+                "request": request,
+                "title": "Change Password",
+                "confirm_id": confirm_id,
+                "key": key,
+            },
+        )
+    return app.core.config.templates.TemplateResponse(
+        "request_confirmation",
+        {
+            "request": request,
+            "title": "Change Password Failed",
+            "message": result["message"],
+        },
+    )
+
+
+@router.post("/change-password/confirm", response_class=HTMLResponse)
+def change_password_confirmation(
+    request: Request,
+    password: Annotated[str, Form()],
+    confirm_id: Annotated[int, Form()],
+    key: Annotated[str, Form()],
+    db: Session = Depends(database.get_db),
+):
+    result = user_auth_service.process_change_password(password, confirm_id, key, db)
+    if result["result"]:
+        title = "Password changed"
+        message = result["message"]
+    else:
+        title = "Password Change Failed"
+        message = result["message"]
+    return app.core.config.templates.TemplateResponse(
+        "request_confirmation.html",
+        {"request": request, "title": title, "message": message},
+    )
