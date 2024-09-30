@@ -2,6 +2,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from app.schemas.user import UserDisplay
+
 
 class CarBase(BaseModel):
     owner_id: int
@@ -16,6 +18,8 @@ class CarBase(BaseModel):
 
 
 class CarDisplay(BaseModel):
+    id: int
+    owner: UserDisplay
     make: str
     model: str
     year: int
