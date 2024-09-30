@@ -4,18 +4,20 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from app.models.address import DBAddress
-from app.schemas.address import AddressProfile
+from app.schemas.address import AddressDisplay
 from app.utils.address_translation import address_to_lat_lon
 
 
 def get_address_by_user_id(user_id: int, db: Session):
     address = db.query(DBAddress).filter(user_id == DBAddress.user_id).first()
     if not address:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No address for the user")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No address for the user"
+        )
     return address
 
 
-def update_user_address(user_id: int, address_profile: AddressProfile, db: Session):
+def update_user_address(user_id: int, address_profile: AddressDisplay, db: Session):
     address = db.query(DBAddress).filter(DBAddress.user_id == user_id).first()
     if address:
         db.delete(address)
@@ -45,20 +47,21 @@ def update_user_address(user_id: int, address_profile: AddressProfile, db: Sessi
         db.add(new_address)
         db.commit()
         db.flush(new_address)
-        address_profile.address_confirmed = True
-    else:
-        address_profile.address_confirmed = False
+        address_profile.latitude = new_address.latitude
+        address_profile.longitude = new_address.longitude
     return address_profile
 
 
 def delete_user_address(user_id: int, db: Session):
     address = db.query(DBAddress).filter(user_id == DBAddress.user_id).first()
     if not address:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No address for the user")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No address for the user"
+        )
     db.delete(address)
     db.commit()
     return "deleted"
-    
+
 
 def is_user_address_complete(user_id, db):
     address = db.query(DBAddress).filter(user_id == DBAddress.user_id).first()

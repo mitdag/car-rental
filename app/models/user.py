@@ -22,7 +22,7 @@ class DBUser(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow())
     last_login = Column(DateTime, default=None)
     address = relationship(
-        "DBAddress", back_populates="user", cascade="all, delete-orphan"
+        "DBAddress", back_populates="user", cascade="all, delete-orphan", uselist=False
     )
     cars = relationship("DBCar", back_populates="owner", cascade="all, delete-orphan")
     user_favorites = relationship(

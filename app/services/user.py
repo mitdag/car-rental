@@ -4,12 +4,13 @@ import uuid
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 
 from app.models.signup_confirmations import DBSignUpConfirmation
 from app.models.user import DBUser
-from app.schemas.address import AddressProfile
+from app.schemas.address import AddressDisplay
 from app.schemas.enums import LoginMethod, UserType
-from app.schemas.user import UserProfile
+from app.schemas.user import UserProfileForm
 from app.services import address as address_service
 from app.utils.hash import Hash
 
@@ -18,6 +19,7 @@ CONFIRMATION_EXPIRE_PERIOD_IN_DAYS = 1
 
 def get_user_by_id(user_id: int, db: Session):
     user = db.query(DBUser).filter(DBUser.id == user_id).first()
+    # user = db.query(DBUser).options(joinedload(DBUser.cars)).filter(DBUser.id == user_id).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist."
@@ -42,8 +44,8 @@ def get_users(db: Session, skip: int, limit: int = 20):
         )
     result = db.query(DBUser).offset(skip).limit(limit).all()
     return {
-        "users": result,
         "next_offset": (skip + limit) if len(result) == limit else None,
+        "users": result,
     }
 
 
@@ -78,8 +80,10 @@ def create_signup_user_from_confirmation_mail(
     confirmation = (
         db.query(DBSignUpConfirmation)
         .filter(
-            confirmation_id == DBSignUpConfirmation.id
-            and key == DBSignUpConfirmation.key
+            and_(
+                confirmation_id == DBSignUpConfirmation.id,
+                key == DBSignUpConfirmation.key,
+            )
         )
         .first()
     )
@@ -130,7 +134,7 @@ def create_social_media_signup_user(email: str, login_method: LoginMethod, db: S
     return {"result": True, "desc": user.email}
 
 
-def modify_user_profile(user_id: int, user_profile: UserProfile, db: Session):
+def modify_user_profile(user_id: int, user_profile: UserProfileForm, db: Session):
     user = db.query(DBUser).filter(user_id == DBUser.id).first()
     if not user:
         raise HTTPException(
@@ -147,7 +151,7 @@ def modify_user_profile(user_id: int, user_profile: UserProfile, db: Session):
 
     address_profile = address_service.update_user_address(
         user_id=user_id,
-        address_profile=AddressProfile(
+        address_profile=AddressDisplay(
             street=user_profile.street,
             number=user_profile.number,
             postal_code=user_profile.postal_code,
@@ -159,7 +163,8 @@ def modify_user_profile(user_id: int, user_profile: UserProfile, db: Session):
     )
     return {
         "profile": user_profile,
-        "address_confirmed": address_profile.address_confirmed,
+        "address_confirmed": (address_profile.latitude and address_profile.longitude)
+        is not None,
     }
 
 

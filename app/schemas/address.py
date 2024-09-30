@@ -12,11 +12,12 @@ class AddressBase(BaseModel):
     longitude: float
 
 
-class AddressProfile(BaseModel):
+class AddressDisplay(BaseModel):
     street: str
     number: str
     postal_code: str
     city: str
     state: str
     country: str
-    address_confirmed: bool = False
+    latitude: float = None
+    longitude: float = None

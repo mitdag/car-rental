@@ -1,16 +1,16 @@
 from enum import Enum
 
 
-class LoginMethod(Enum):
-    EMAIL = 1
-    FACEBOOK = 2
-    GOOGLE = 3
-    APPLE = 4
+class LoginMethod(str, Enum):
+    EMAIL = "EMAIL"
+    FACEBOOK = "FACEBOOK"
+    GOOGLE = "GOOGLE"
+    APPLE = "APPLE"
 
 
-class UserType(Enum):
-    USER = 1
-    ADMIN = 2
+class UserType(str, Enum):
+    USER = "USER"
+    ADMIN = "ADMIN"
 
 
 class CarEngineType(str, Enum):

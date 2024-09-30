@@ -15,7 +15,9 @@ router = APIRouter(prefix="/login", tags=["signup/login"])
 class OAuth2PasswordRequestFormCustom(OAuth2PasswordRequestForm):
     def __init__(
         self,
-        login_method: int = Form(1),  # Expecting login_method as form input
+        login_method: LoginMethod = Form(
+            LoginMethod.EMAIL
+        ),  # Expecting login_method as form input
         username: str = Form(...),
         password: str = Form(None),
     ):

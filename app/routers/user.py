@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import List
+from typing import List, Dict, Union, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Query
 from fastapi import Path as FastAPI_Path, status
@@ -12,14 +12,14 @@ from app.core import database
 from app.schemas import constants
 from app.schemas.car import CarDisplay
 from app.schemas.enums import UserType
-from app.schemas.user import UserDisplay, UserProfile, UserBase
+from app.schemas.user import UserDisplay, UserProfileForm, UserBase
 from app.services import car as car_service
 from app.services import user as user_service
 
 router = APIRouter(prefix="/user", tags=["user"])
 
 
-@router.get("/all", response_model=List[UserDisplay])
+@router.get("/all", response_model=Dict[str, Union[Optional[int], List[UserDisplay]]])
 def get_users(
     skip: int = Query(0, description="Offset start number."),
     limit: int = Query(
@@ -46,12 +46,11 @@ def get_user(
 
 @router.put("/profile")
 def modify_user_profile(
-    user_profile: UserProfile,
+    user_profile: UserProfileForm,
     db: Session = Depends(database.get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
-    if oauth2.can_call_this_api(current_user, current_user.id):
-        return user_service.modify_user_profile(current_user.id, user_profile, db)
+    return user_service.modify_user_profile(current_user.id, user_profile, db)
 
 
 @router.post("/profile-picture")
