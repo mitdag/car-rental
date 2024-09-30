@@ -21,6 +21,7 @@ from app.schemas.enums import (
     CarSearchSortDirection,
     CarSearchSortType,
     CarTransmissionType,
+    UserType,
 )
 from app.services import car
 
@@ -211,12 +212,10 @@ def delete_car(
     """
     db_car = car.get_car(db, car_id)
 
-    # Check if the current user is the owner of the car
-    if db_car.owner_id != current_user.id:
+    if current_user.user_type != UserType.ADMIN and db_car.owner_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to delete this car",
         )
 
-    # Proceed to delete the car if authorized
     return car.delete_car(db, car_id)
