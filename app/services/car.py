@@ -26,7 +26,7 @@ def create_car(db: Session, car: CarBase) -> DBCar:
 
 
 def get_car(db: Session, car_id: int) -> Optional[DBCar]:
-    car = db.query(DBCar).filter(DBCar.car_id == car_id).first()
+    car = db.query(DBCar).filter(DBCar.id == car_id).first()
     if not car:
         raise HTTPException(status_code=404, detail="Car not found")
     return car
@@ -167,8 +167,7 @@ def search_cars(
         DBAddress.city,
         DBAddress.latitude,
         DBAddress.longitude,
-        # TODO change this to id
-        DBCar.car_id.label("car_id"),
+        DBCar.id.label("car_id"),
         DBCar.motor_type,
         DBCar.price_per_day,
         DBCar.transmission_type,

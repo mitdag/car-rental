@@ -7,7 +7,7 @@ from app.core.database import Base
 class DBCar(Base):
     __tablename__ = "cars"
 
-    car_id = Column(Integer, primary_key=True, index=True)
+    car = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
     make = Column(String, nullable=False)
     model = Column(String, nullable=False)

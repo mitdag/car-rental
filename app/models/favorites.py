@@ -5,4 +5,4 @@ from sqlalchemy import Column, Integer, ForeignKey
 class DBFavorite(Base):
     __tablename__ = "favorites"
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    car_id = Column(Integer, ForeignKey("cars.car_id"), primary_key=True)
+    car_id = Column(Integer, ForeignKey("cars.id"), primary_key=True)
