@@ -25,3 +25,6 @@ class DBUser(Base):
         "DBAddress", back_populates="user", cascade="all, delete-orphan"
     )
     cars = relationship("DBCar", back_populates="owner", cascade="all, delete-orphan")
+    rentals = relationship("DBRental", back_populates="renter")
+    reviews_written = relationship("DBReview", foreign_keys="DBReview.reviewer_id", back_populates="reviewer")
+    reviews_received = relationship("DBReview", foreign_keys="DBReview.reviewee_id", back_populates="reviewee")

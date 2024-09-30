@@ -7,7 +7,7 @@ from app.core.database import Base
 class DBCar(Base):
     __tablename__ = "cars"
 
-    car_id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
     make = Column(String, nullable=False)
     model = Column(String, nullable=False)
@@ -17,4 +17,6 @@ class DBCar(Base):
     price_per_day = Column(Float, nullable=False)
     description = Column(Text)
     is_listed = Column(Boolean, default=True)
+    
     owner = relationship("DBUser", back_populates="cars")
+    rentals = relationship("DBRental", back_populates="car")  
