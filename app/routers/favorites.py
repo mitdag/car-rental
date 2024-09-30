@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from typing import List
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2
@@ -13,7 +12,6 @@ router = APIRouter(prefix="/favorites", tags=["favorites"])
 
 @router.get(
     "",
-    response_model=List[FavoritesBase],
     summary="Get user favorite cars",
     description="Gets id list of the cars favorited by the current user",
 )

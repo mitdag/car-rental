@@ -12,8 +12,13 @@ def get_favorites_for_car(car_id: int, db: Session):
 
 
 def get_favorites_for_user(current_user: UserBase, db: Session):
-    favorites = db.query(DBFavorite).filter(DBFavorite.user_id == current_user.id).all()
-    return favorites
+    favorites = (
+        db.query(DBFavorite.car_id).filter(DBFavorite.user_id == current_user.id).all()
+    )
+    return {
+        "user_id": current_user.id,
+        "favorite_car_ids": [item[0] for item in favorites],
+    }
 
 
 def add_to_favorite(car_id: int, current_user: UserBase, db: Session):
