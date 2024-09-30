@@ -193,6 +193,7 @@ def update_car(
     "/{car_id}",
     summary="Delete a car",
     description="Delete a car from the database by its ID. Requires authentication.",
+    tags=["car", "admin"],
 )
 def delete_car(
     car_id: int,
