@@ -6,9 +6,6 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from sqlalchemy.orm import Session
 
-from app.schemas.enums import UserType
-from app.schemas.user import UserBase
-
 from app.core import database
 from app.services import user
 from app.utils.logger import logger
@@ -57,13 +54,13 @@ def get_current_user(
     return current_user
 
 
-def can_call_this_api(current_user: UserBase, user_id_in_api_call: int):
-    if (
-        user_id_in_api_call == current_user.id
-        or current_user.user_type == UserType.ADMIN
-    ):
-        return True
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="User cannot perform this action",
-    )
+# def can_call_this_api(current_user: UserBase, user_id_in_api_call: int):
+#     if (
+#         user_id_in_api_call == current_user.id
+#         or current_user.user_type == UserType.ADMIN
+#     ):
+#         return True
+#     raise HTTPException(
+#         status_code=status.HTTP_401_UNAUTHORIZED,
+#         detail="User cannot perform this action",
+#     )

@@ -2,10 +2,9 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-#from app.api import review
 from app.auth import login, signup
 from app.core.database import Base, engine
-from app.routers import car, user, review, rental
+from app.routers import car, user, favorites, review, rental
 from app.tests.test_sets import create_test_db
 
 app = FastAPI()
@@ -17,6 +16,7 @@ app.include_router(car.router)
 app.include_router(review.router)
 app.include_router(rental.router)
 app.include_router(create_test_db.router)
+app.include_router(favorites.router)
 
 Base.metadata.create_all(engine)
 

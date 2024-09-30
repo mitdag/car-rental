@@ -1,7 +1,10 @@
 from datetime import datetime
 import time
+from typing import Optional
+
 from pydantic import BaseModel
 
+from app.schemas.address import AddressDisplay
 from app.schemas.enums import LoginMethod, UserType
 
 
@@ -28,13 +31,14 @@ class UserDisplay(BaseModel):
     phone_number: str = None
     user_type: UserType
     is_verified: bool = False
+    address: Optional[AddressDisplay]
+    # cars: Optional[List[CarDisplay]]
 
     class Config:
         from_attributes = True
 
 
-class UserProfile(BaseModel):
-    id: int
+class UserProfileForm(BaseModel):
     name: str
     last_name: str
     phone_number: str

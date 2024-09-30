@@ -26,4 +26,4 @@ class CarDisplay(BaseModel):
     is_listed: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True

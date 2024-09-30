@@ -22,9 +22,16 @@ class DBUser(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow())
     last_login = Column(DateTime, default=None)
     address = relationship(
-        "DBAddress", back_populates="user", cascade="all, delete-orphan"
+        "DBAddress", back_populates="user", cascade="all, delete-orphan", uselist=False
     )
     cars = relationship("DBCar", back_populates="owner", cascade="all, delete-orphan")
+    user_favorites = relationship(
+        "DBCar", secondary="favorites", back_populates="favorited_by"
+    )
     rentals = relationship("DBRental", back_populates="renter")
-    reviews_written = relationship("DBReview", foreign_keys="DBReview.reviewer_id", back_populates="reviewer")
-    reviews_received = relationship("DBReview", foreign_keys="DBReview.reviewee_id", back_populates="reviewee")
+    reviews_written = relationship(
+        "DBReview", foreign_keys="DBReview.reviewer_id", back_populates="reviewer"
+    )
+    reviews_received = relationship(
+        "DBReview", foreign_keys="DBReview.reviewee_id", back_populates="reviewee"
+    )

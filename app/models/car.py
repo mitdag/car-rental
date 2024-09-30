@@ -17,6 +17,9 @@ class DBCar(Base):
     price_per_day = Column(Float, nullable=False)
     description = Column(Text)
     is_listed = Column(Boolean, default=True)
-    
+
     owner = relationship("DBUser", back_populates="cars")
-    rentals = relationship("DBRental", back_populates="car")  
+    favorited_by = relationship(
+        "DBUser", secondary="favorites", back_populates="user_favorites"
+    )
+    rentals = relationship("DBRental", back_populates="car")
