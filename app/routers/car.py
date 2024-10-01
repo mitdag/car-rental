@@ -9,7 +9,7 @@ Some actions require user authentication.
 from datetime import datetime
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2
@@ -43,7 +43,7 @@ def create_car(
     Create a new car entry in the database.
 
     Args:
-        request (CarBase): The details of the car to create.
+        request (CarCreate): The details of the car to create.
         db (Session): Database session dependency.
         current_user (Any): The authenticated user creating the car.
 
@@ -150,7 +150,10 @@ def search_car(
     summary="Get car by ID",
     description="Retrieve details of a car by its ID.",
 )
-def read_car(car_id: int, db: Session = Depends(get_db)) -> CarDisplay:
+def get_car(
+    car_id: int = Path(..., ge=1, description="The ID of the car to retrieve"),
+    db: Session = Depends(get_db),
+) -> CarDisplay:
     """
     Retrieve a car entry from the database by its ID.
 
