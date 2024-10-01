@@ -12,7 +12,7 @@ from app.core import database
 from app.utils import constants
 from app.schemas.car import CarDisplay
 from app.schemas.enums import UserType
-from app.schemas.user import UserBase, UserDisplay, UserProfileForm
+from app.schemas.user import UserBase, UserDisplay, UserProfileForm, UserProfileDisplay
 from app.services import car as car_service
 from app.services import user as user_service
 
@@ -44,12 +44,25 @@ def get_user(
     return user_service.get_user_by_id(current_user.id, db)
 
 
+@router.get("/profile", response_model=UserProfileDisplay)
+def get_user_profile(
+    db: Session = Depends(database.get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    return current_user
+
+
 @router.put("/profile")
 def modify_user_profile(
     user_profile: UserProfileForm,
     db: Session = Depends(database.get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
+    if not user_profile:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="user profile data is missing.",
+        )
     return user_service.modify_user_profile(current_user.id, user_profile, db)
 
 

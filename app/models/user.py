@@ -15,12 +15,14 @@ class DBUser(Base):
     last_name = Column(String, default="")
     email = Column(String, unique=True, index=True)
     password = Column(String, default="")
-    login_method = Column(SqlEnum(LoginMethod))
+    login_method = Column(SqlEnum(LoginMethod), default=SqlEnum(LoginMethod.EMAIL))
     phone_number = Column(String, default="")
-    user_type = Column(SqlEnum(UserType))
+    user_type = Column(SqlEnum(UserType), SqlEnum(UserType.USER))
     is_verified = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow())
     last_login = Column(DateTime, default=None)
+    is_profile_completed = Column(Boolean, default=False)
+
     address = relationship(
         "DBAddress", back_populates="user", cascade="all, delete-orphan", uselist=False
     )

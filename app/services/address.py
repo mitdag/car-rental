@@ -42,6 +42,8 @@ def update_user_address(user_id: int, address_profile: AddressDisplay, db: Sessi
             country=address_profile.country,
             latitude=lat_long["latitude"],
             longitude=lat_long["longitude"],
+            is_address_confirmed=lat_long["latitude"] is not None
+            and lat_long["longitude"] is not None,
             created_at=datetime.datetime.utcnow(),
         )
         db.add(new_address)

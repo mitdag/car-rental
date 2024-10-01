@@ -32,7 +32,6 @@ class UserDisplay(BaseModel):
     user_type: UserType
     is_verified: bool = False
     address: Optional[AddressDisplay]
-    # cars: Optional[List[CarDisplay]]
 
     class Config:
         from_attributes = True
@@ -51,3 +50,11 @@ class UserProfileForm(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UserProfileDisplay(BaseModel):
+    id: int
+    name: str = None
+    last_name: str = None
+    phone_number: str = None
+    address: Optional[AddressDisplay]

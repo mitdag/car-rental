@@ -40,6 +40,10 @@ def get_users(db: Session, skip: int, limit: int = 20):
     }
 
 
+def get_user_profile(user_id: int, db: Session):
+    return db.query(DBUser).join(DBUser.address).filter(DBUser.id == user_id).first()
+
+
 def modify_user_profile(user_id: int, user_profile: UserProfileForm, db: Session):
     user = db.query(DBUser).filter(user_id == DBUser.id).first()
     if not user:
@@ -47,9 +51,16 @@ def modify_user_profile(user_id: int, user_profile: UserProfileForm, db: Session
             status_code=status.HTTP_400_BAD_REQUEST, detail="User does not exist."
         )
 
-    user.name = user_profile.name
-    user.last_name = user_profile.last_name
-    user.phone_number = user_profile.phone_number
+    user.name = "" if not user_profile.name else user_profile.name.strip()
+    user.last_name = (
+        "" if not user_profile.last_name else user_profile.last_name.strip()
+    )
+    user.phone_number = (
+        "" if not user_profile.phone_number else user_profile.phone_number.strip()
+    )
+    user.is_profile_completed = (
+        user.last_name != "" and user.last_name != "" and user.phone_number != ""
+    )
 
     db.add(user)
     db.commit()
@@ -69,7 +80,8 @@ def modify_user_profile(user_id: int, user_profile: UserProfileForm, db: Session
     )
     return {
         "profile": user_profile,
-        "address_confirmed": (address_profile.latitude and address_profile.longitude)
+        "is_profile_completed": user.is_profile_completed,
+        "is_address_confirmed": (address_profile.latitude and address_profile.longitude)
         is not None,
     }
 
