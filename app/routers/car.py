@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from app.auth import oauth2
 from app.core.database import get_db
 from app.schemas import constants
-from app.schemas.car import CarBase, CarDisplay
+from app.schemas.car import CarBase, CarCreate, CarDisplay
 from app.schemas.enums import (
     CarEngineType,
     CarSearchSortDirection,
@@ -25,7 +25,7 @@ from app.schemas.enums import (
 )
 from app.services import car
 
-router = APIRouter(prefix="/car", tags=["car"])
+router = APIRouter(prefix="/cars", tags=["cars"])
 
 
 @router.post(
@@ -35,7 +35,7 @@ router = APIRouter(prefix="/car", tags=["car"])
     description="Create a new car entry. Requires authenticated user.",
 )
 def create_car(
-    request: CarBase,
+    request: CarCreate,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -50,14 +50,14 @@ def create_car(
     Returns:
         CarDisplay: The newly created car.
     """
-    return car.create_car(db, request)
+    return car.create_car(db, request, current_user.id)
 
 
 @router.get(
     "/",
     response_model=List[CarDisplay],
-    summary="Get all cars",
-    description="Retrieve a list of all cars from the database.",
+    summary="List all cars",
+    description="Retrieve a paginated list of all cars from the database.",
 )
 def read_cars(
     db: Session = Depends(get_db),
@@ -193,7 +193,7 @@ def update_car(
     "/{car_id}",
     summary="Delete a car",
     description="Delete a car from the database by its ID. Requires authentication.",
-    tags=["car", "admin"],
+    tags=["cars", "admin"],
 )
 def delete_car(
     car_id: int,

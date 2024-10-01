@@ -16,8 +16,8 @@ from app.utils.logger import logger
 # Database Operations
 
 
-def create_car(db: Session, car: CarBase) -> DBCar:
-    db_car = DBCar(**car.model_dump())
+def create_car(db: Session, car: CarBase, user_id: int) -> DBCar:
+    db_car = DBCar(**car.model_dump(), owner_id=user_id)
     db.add(db_car)
     db.commit()
     db.refresh(db_car)

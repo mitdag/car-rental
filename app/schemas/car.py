@@ -17,6 +17,20 @@ class CarBase(BaseModel):
     is_listed: bool = True
 
 
+class CarCreate(BaseModel):
+    make: str
+    model: str
+    year: int
+    transmission_type: str
+    motor_type: str
+    price_per_day: float
+    description: Optional[str] = None
+    is_listed: bool = True
+
+    class Config:
+        from_attributes = True
+
+
 class CarDisplay(BaseModel):
     id: int
     owner: UserDisplay
