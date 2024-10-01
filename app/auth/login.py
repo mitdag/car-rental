@@ -31,7 +31,13 @@ class OAuth2PasswordRequestFormCustom(OAuth2PasswordRequestForm):
         self.login_method = login_method
 
 
-@router.post("/")
+@router.post(
+    "",
+    summary="Login for email users, signup/login for social media users.",
+    description="Users can login and get a token from via this endpoint. "
+    "If the user is a social media user and if has no account yet "
+    "a new account is also created and access token provided at this endpoint.",
+)
 def login(
     auth_form: OAuth2PasswordRequestFormCustom = Depends(),
     db: Session = Depends(database.get_db),
@@ -82,12 +88,18 @@ def login(
     }
 
 
-@router.post("/forgot-password")
+@router.post(
+    "/forgot-password",
+    summary="Start a 'Forgot password' process",
+    description="This endpoint is triggerd when the user clicks 'Forgot password' button. The provided "
+    "password is checked if the user really has an account. If so, an change password link "
+    "is sent to user's email.",
+)
 def forgot_password(email: str, db: Session = Depends(database.get_db)):
     entry = user_auth_service.create_forgot_password_validation_entry(email, db)
     email_sender.send_forgot_password_email(
         receiver_address=email,
-        path="http://127.0.0.1:8000/login/change-password/confirm",
+        path="http://127.0.0.1:8000/login/password-form",
         params={"key": entry["key"], "confirm_id": entry["id"]},
         expires=entry["expires_in"],
     )
@@ -97,7 +109,12 @@ def forgot_password(email: str, db: Session = Depends(database.get_db)):
     }
 
 
-@router.get("/change-password/confirm", response_class=HTMLResponse)
+@router.get(
+    "/password-form",
+    response_class=HTMLResponse,
+    summary="Request change password form",
+    description="This endpoint is triggerd when the user clicks the change password link in the email.",
+)
 def change_password(
     request: Request,
     confirm_id: int = Query(...),
@@ -116,7 +133,7 @@ def change_password(
             },
         )
     return app.core.config.templates.TemplateResponse(
-        "request_confirmation",
+        "request_confirmation.html",
         {
             "request": request,
             "title": "Change Password Failed",
@@ -125,7 +142,12 @@ def change_password(
     )
 
 
-@router.post("/change-password/confirm", response_class=HTMLResponse)
+@router.put(
+    "/password-form",
+    response_class=HTMLResponse,
+    summary="Send change password form",
+    description="This endpoint is triggerd when the user clicks the send button on 'change password' form (browser).",
+)
 def change_password_confirmation(
     request: Request,
     password: Annotated[str, Form()],

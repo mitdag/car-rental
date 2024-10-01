@@ -35,6 +35,7 @@ def create_signup_validation_entry(email: str, password: str, db: Session):
     db.flush(new_confirmation)
     return {
         "id": new_confirmation.id,
+        "key": new_confirmation.key,
         "expires_in": CONFIRMATION_EXPIRE_PERIOD_IN_DAYS,
     }
 

@@ -11,7 +11,13 @@ from app.utils import email_sender
 router = APIRouter(prefix="/signup", tags=["signup/login"])
 
 
-@router.post("/")
+@router.post(
+    "",
+    summary="Send a 'signup with email' request",
+    description="This endpoint used for the users who want to signup by using their email. "
+    "Signup process does not end at this endpoint. link to the provided email address."
+    "Users who want to signup with social media accounts use login endpoint.",
+)
 def signup(
     email: str = Body(...),
     password: str = Body(...),
@@ -22,7 +28,7 @@ def signup(
     )
     email_sender.send_signup_confirmation_email(
         receiver_address=email,
-        path="http://127.0.0.1:8000/signup/confirm",
+        path="http://127.0.0.1:8000/signup",
         params={"key": entry["key"], "confirmation_id": entry["id"]},
         expires=entry["expires_in"],
     )
@@ -32,7 +38,14 @@ def signup(
     }
 
 
-@router.get("/confirm", response_class=HTMLResponse)
+@router.get(
+    "",
+    response_class=HTMLResponse,
+    summary="Finalize the signup process",
+    description="This endpoint is triggered when the user clicks the signup confirmation "
+    "link in the email. It returns an html code to inform the user about the "
+    "success/failure of the signup process.",
+)
 def signup_confirmation(
     request: Request,
     confirmation_id: int = Query(...),

@@ -16,8 +16,8 @@ app.mount(
     name="static",
 )
 
-app.include_router(login.router)
 app.include_router(signup.router)
+app.include_router(login.router)
 app.include_router(user.router)
 app.include_router(car.router)
 app.include_router(review.router)
