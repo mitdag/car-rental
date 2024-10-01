@@ -59,15 +59,16 @@ def create_car(
     summary="List all cars",
     description="Retrieve a paginated list of all cars from the database.",
 )
-def read_cars(
+def list_cars(
     db: Session = Depends(get_db),
     skip: int = Query(
         0, ge=0, description="Number of records to skip (used for pagination)"
     ),
     limit: int = Query(
-        100,
+        constants.QUERY_LIMIT_DEFAULT,
         ge=1,
-        description="Maximum number of records to return (used for pagination)",
+        le=constants.QUERY_LIMIT_MAX,
+        description="Maximum number of records to return",
     ),
 ) -> List[CarDisplay]:
     """
