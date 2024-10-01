@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Body, Depends, Query, Request, status, Request, Query
-from fastapi.responses import HTMLResponse, Response
-from fastapi.templating import Jinja2Templates
+from fastapi import APIRouter, Body, Depends, status, Request, Query
+from fastapi.responses import HTMLResponse
 from pydantic import EmailStr
 
 from sqlalchemy.orm import Session
@@ -9,8 +8,6 @@ import app.core.config
 import app.services.user_auth_service
 from app.core import database
 
-from app.schemas import user as user_schema
-from app.services import user as user_service
 
 from app.utils import email_sender
 
