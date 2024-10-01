@@ -12,6 +12,7 @@ erDiagram
         string user_type
         float rating
         boolean is_verified
+        boolean is_profile_completed
         datetime created_at
         datetime last_login
     }
