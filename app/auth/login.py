@@ -1,11 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Form
+from typing_extensions import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status, Form, Request, Query
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import HTMLResponse
 
+import app.core.config
+from app.services import user_auth_service
 from app.auth import oauth2
 from app.core import database
 from app.schemas.enums import LoginMethod
 from app.services import user as user_service
+from app.utils import email_sender
 from app.utils.hash import Hash
 from app.utils.logger import logger
 
@@ -25,7 +31,13 @@ class OAuth2PasswordRequestFormCustom(OAuth2PasswordRequestForm):
         self.login_method = login_method
 
 
-@router.post("/")
+@router.post(
+    "",
+    summary="Login for email users, signup/login for social media users.",
+    description="Users can login and get a token from via this endpoint. "
+    "If the user is a social media user and if has no account yet "
+    "a new account is also created and access token provided at this endpoint.",
+)
 def login(
     auth_form: OAuth2PasswordRequestFormCustom = Depends(),
     db: Session = Depends(database.get_db),
@@ -63,14 +75,94 @@ def login(
     else:
         user = user_service.get_user_by_email(auth_form.username, db)
         if not user:
-            user_service.create_social_media_signup_user(
+            user_auth_service.create_social_media_signup_user(
                 auth_form.username, login_method, db
             )
 
     access_token = oauth2.create_access_token({"username": auth_form.username})
-    user_service.update_user_login(auth_form.username, db)
+    user_auth_service.update_user_login(auth_form.username, db)
     return {
         "access_token": access_token,
         "token_type": "bearer",
         "user": f"{auth_form.username}",
     }
+
+
+@router.post(
+    "/forgot-password",
+    summary="Start a 'Forgot password' process",
+    description="This endpoint is triggerd when the user clicks 'Forgot password' button. The provided "
+    "password is checked if the user really has an account. If so, an change password link "
+    "is sent to user's email.",
+)
+def forgot_password(email: str, db: Session = Depends(database.get_db)):
+    entry = user_auth_service.create_forgot_password_validation_entry(email, db)
+    email_sender.send_forgot_password_email(
+        receiver_address=email,
+        path="http://127.0.0.1:8000/login/password-form",
+        params={"key": entry["key"], "confirm_id": entry["id"]},
+        expires=entry["expires_in"],
+    )
+    return {
+        "status_code": status.HTTP_200_OK,
+        "content": "Change password email has been sent",
+    }
+
+
+@router.get(
+    "/password-form",
+    response_class=HTMLResponse,
+    summary="Request change password form",
+    description="This endpoint is triggerd when the user clicks the change password link in the email.",
+)
+def change_password(
+    request: Request,
+    confirm_id: int = Query(...),
+    key: str = Query(...),
+    db: Session = Depends(database.get_db),
+):
+    result = user_auth_service.check_change_password_link_validity(confirm_id, key, db)
+    if result["result"]:
+        return app.core.config.templates.TemplateResponse(
+            "change_password.html",
+            {
+                "request": request,
+                "title": "Change Password",
+                "confirm_id": confirm_id,
+                "key": key,
+            },
+        )
+    return app.core.config.templates.TemplateResponse(
+        "request_confirmation.html",
+        {
+            "request": request,
+            "title": "Change Password Failed",
+            "message": result["message"],
+        },
+    )
+
+
+@router.put(
+    "/password-form",
+    response_class=HTMLResponse,
+    summary="Send change password form",
+    description="This endpoint is triggerd when the user clicks the send button on 'change password' form (browser).",
+)
+def change_password_confirmation(
+    request: Request,
+    password: Annotated[str, Form()],
+    confirm_id: Annotated[int, Form()],
+    key: Annotated[str, Form()],
+    db: Session = Depends(database.get_db),
+):
+    result = user_auth_service.process_change_password(password, confirm_id, key, db)
+    if result["result"]:
+        title = "Password changed"
+        message = result["message"]
+    else:
+        title = "Password Change Failed"
+        message = result["message"]
+    return app.core.config.templates.TemplateResponse(
+        "request_confirmation.html",
+        {"request": request, "title": title, "message": message},
+    )
