@@ -6,10 +6,10 @@ It allows users to create, read, update, and delete car records.
 Some actions require user authentication.
 """
 
-from typing import List
 from datetime import datetime
+from typing import List
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2
@@ -17,10 +17,11 @@ from app.core.database import get_db
 from app.schemas.car import CarBase, CarDisplay
 from app.utils import constants
 from app.schemas.enums import (
-    CarSearchSortType,
-    CarSearchSortDirection,
     CarEngineType,
+    CarSearchSortDirection,
+    CarSearchSortType,
     CarTransmissionType,
+    UserType,
 )
 from app.services import car
 
@@ -54,21 +55,33 @@ def create_car(
 
 @router.get(
     "/",
-    response_model=List[CarBase],
+    response_model=List[CarDisplay],
     summary="Get all cars",
     description="Retrieve a list of all cars from the database.",
 )
-def read_cars(db: Session = Depends(get_db)) -> List[CarBase]:
+def read_cars(
+    db: Session = Depends(get_db),
+    skip: int = Query(
+        0, ge=0, description="Number of records to skip (used for pagination)"
+    ),
+    limit: int = Query(
+        100,
+        ge=1,
+        description="Maximum number of records to return (used for pagination)",
+    ),
+) -> List[CarDisplay]:
     """
-    Retrieve all car entries from the database.
+    Retrieve all car entries from the database with pagination options.
 
     Args:
         db (Session): Database session dependency.
+        skip (int): Number of records to skip (used for pagination).
+        limit (int): Maximum number of records to return (used for pagination).
 
     Returns:
-        List[CarBase]: A list of all cars in the database.
+        List[CarBase]: A list of cars in the database based on pagination.
     """
-    return car.get_cars(db)
+    return car.get_cars(db, skip=skip, limit=limit)
 
 
 @router.get(
@@ -180,6 +193,7 @@ def update_car(
     "/{car_id}",
     summary="Delete a car",
     description="Delete a car from the database by its ID. Requires authentication.",
+    tags=["car", "admin"],
 )
 def delete_car(
     car_id: int,
@@ -197,4 +211,12 @@ def delete_car(
     Returns:
         Any: The result of the delete operation.
     """
+    db_car = car.get_car(db, car_id)
+
+    if current_user.user_type != UserType.ADMIN and db_car.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to delete this car",
+        )
+
     return car.delete_car(db, car_id)

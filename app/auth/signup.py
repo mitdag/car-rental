@@ -1,10 +1,16 @@
-from fastapi import APIRouter, Depends, Body, status, Request, Query
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Body, Depends, Query, Request, status, Request, Query
+from fastapi.responses import HTMLResponse, Response
+from fastapi.templating import Jinja2Templates
+from pydantic import EmailStr
+
 from sqlalchemy.orm import Session
 
 import app.core.config
 import app.services.user_auth_service
 from app.core import database
+
+from app.schemas import user as user_schema
+from app.services import user as user_service
 
 from app.utils import email_sender
 
@@ -19,7 +25,7 @@ router = APIRouter(prefix="/signup", tags=["signup/login"])
     "Users who want to signup with social media accounts use login endpoint.",
 )
 def signup(
-    email: str = Body(...),
+    email: EmailStr = Body(...),
     password: str = Body(...),
     db: Session = Depends(database.get_db),
 ):
