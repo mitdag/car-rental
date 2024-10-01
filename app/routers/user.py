@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import oauth2
 from app.core import database
-from app.schemas import constants
+from app.utils import constants
 from app.schemas.car import CarDisplay
 from app.schemas.enums import UserType
 from app.schemas.user import UserDisplay, UserProfileForm, UserBase
@@ -58,6 +58,10 @@ def upload_profile_picture(
     picture: UploadFile = File(...),
     current_user=Depends(oauth2.get_current_user),
 ):
+    if not picture:
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Provide a picture"
+        )
     current_dir = Path(os.path.dirname(__file__)).as_posix()
     pictures_path = (
         current_dir[: current_dir.rindex("/")] + "/static/images/profile-pictures"

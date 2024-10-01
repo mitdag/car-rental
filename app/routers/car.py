@@ -14,8 +14,8 @@ from sqlalchemy.orm import Session
 
 from app.auth import oauth2
 from app.core.database import get_db
-from app.schemas import constants
 from app.schemas.car import CarBase, CarDisplay
+from app.utils import constants
 from app.schemas.enums import (
     CarEngineType,
     CarSearchSortDirection,
