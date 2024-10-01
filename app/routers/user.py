@@ -1,10 +1,10 @@
 import os
 import shutil
 from pathlib import Path
-from typing import List, Dict, Union, Optional
+from typing import Dict, List, Optional, Union
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Query
-from fastapi import Path as FastAPI_Path, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import Path as FastAPI_Path
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2
@@ -12,7 +12,7 @@ from app.core import database
 from app.schemas import constants
 from app.schemas.car import CarDisplay
 from app.schemas.enums import UserType
-from app.schemas.user import UserDisplay, UserProfileForm, UserBase
+from app.schemas.user import UserBase, UserDisplay, UserProfileForm
 from app.services import car as car_service
 from app.services import user as user_service
 
@@ -79,7 +79,7 @@ def delete_user(
     return user_service.delete_user(current_user.id, db)
 
 
-@router.get("/{user_id}/cars", response_model=List[CarDisplay], tags=["user", "car"])
+@router.get("/{user_id}/cars", response_model=List[CarDisplay], tags=["user", "cars"])
 def read_cars_by_user(
     user_id: int = FastAPI_Path(...), db: Session = Depends(database.get_db)
 ):
