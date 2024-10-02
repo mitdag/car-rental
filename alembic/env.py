@@ -1,3 +1,7 @@
+# ref: https://www.nashruddinamin.com/blog/how-to-use-alembic-for-database-migrations-in-your-fastapi-application
+# ref: https://blog.fantom.co.jp/2023/12/05/fastapi-sqlalchemy-alembic-sqlite/
+# ref: https://mdhvkothari.medium.com/how-to-do-the-migration-in-fastapi-5c53d3880f12
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
@@ -24,10 +28,6 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URL)
 
