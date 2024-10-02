@@ -8,9 +8,8 @@ from sqlalchemy.orm import Session
 from app.models.address import DBAddress
 from app.models.car import DBCar
 from app.models.user import DBUser
-from app.schemas.car import CarBase
+from app.schemas.car import CarBase, CarUpdate
 from app.schemas.enums import CarSearchSortDirection, CarSearchSortType
-from app.services.user import get_user_by_id
 from app.utils.logger import logger
 
 # Database Operations
@@ -35,35 +34,47 @@ def get_cars(db: Session, skip: int = 0, limit: int = 100) -> List[DBCar]:
     return db.query(DBCar).offset(skip).limit(limit).all()
 
 
-def update_car(db: Session, car_id: int, car_update: CarBase) -> Optional[DBCar]:
-    if car_update.owner_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="owner_id must be provided."
-        )
-    try:
-        get_car(db, car_id)
-    except Exception as exc:
-        logger.error(exc)
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Car with ID {car_id} does not exist.",
-        )
-    try:
-        get_user_by_id(car_update.owner_id, db)
-    except Exception as exc:
-        logger.error(exc)
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with ID {car_update.owner_id} does not exist.",
-        )
+def update_car(db: Session, car_id: int, car_update: CarUpdate) -> Optional[DBCar]:
+    # For admin endpoint
+    # if car_update.owner_id is None:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST, detail="owner_id must be provided."
+    #     )
+    # try:
+    #     get_car(db, car_id)
+    # except Exception as exc:
+    #     logger.error(exc)
+    #     raise HTTPException(
+    #         status_code=status.HTTP_404_NOT_FOUND,
+    #         detail=f"Car with ID {car_id} does not exist.",
+    #     )
+    # For admin endpoint
+    # try:
+    #     get_user_by_id(car_update.owner_id, db)
+    # except Exception as exc:
+    #     logger.error(exc)
+    #     raise HTTPException(
+    #         status_code=status.HTTP_404_NOT_FOUND,
+    #         detail=f"User with ID {car_update.owner_id} does not exist.",
+    #     )
 
     db_car = get_car(db, car_id)
     if db_car:
-        update_data = car_update.dict(exclude_unset=True)
+        update_data = car_update.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(db_car, key, value)
-        db.commit()
-        db.refresh(db_car)
+
+        try:
+            db.add(db_car)
+            db.commit()
+            db.refresh(db_car)
+        except Exception as exc:
+            logger.error(exc)
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"An error occurred while updating the car: {str(exc)}",
+            )
     return db_car
 
 
