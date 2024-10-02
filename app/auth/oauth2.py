@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core import database
 from app.services import user
+from app.utils.constants import ACCESS_TOKEN_EXPIRE_MINUTES
 from app.utils.logger import logger
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -26,7 +27,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -51,15 +52,3 @@ def get_current_user(
         logger.error("Could not authenticate")
         raise credential_exception
     return current_user
-
-
-# def can_call_this_api(current_user: UserBase, user_id_in_api_call: int):
-#     if (
-#         user_id_in_api_call == current_user.id
-#         or current_user.user_type == UserType.ADMIN
-#     ):
-#         return True
-#     raise HTTPException(
-#         status_code=status.HTTP_401_UNAUTHORIZED,
-#         detail="User cannot perform this action",
-#     )
