@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import Depends, status, HTTPException
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from sqlalchemy.orm import Session
 
 from app.core import database
+from app.schemas.enums import UserType
 from app.services import user
 from app.utils.logger import logger
 
@@ -50,6 +51,34 @@ def get_current_user(
     except Exception:
         logger.error("Could not authenticate")
         raise credential_exception
+    return current_user
+
+
+def admin_only(
+    current_user=Depends(get_current_user),
+    db: Session = Depends(database.get_db),
+):
+    """
+    Dependency that restricts access to admin users only.
+
+    This function checks if the current user has admin privileges. If the user is not an admin,
+    it raises an HTTP 403 Forbidden exception. If the user is an admin, it returns the user object.
+
+    Args:
+        current_user: A dependency that retrieves the currently authenticated user.
+        db: A dependency that provides the database session.
+
+    Raises:
+        HTTPException: If the user does not have admin privileges, an exception with status code 403 is raised.
+
+    Returns:
+        user: The current user object if they have admin privileges.
+    """
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. Admin privileges required.",
+        )
     return current_user
 
 
