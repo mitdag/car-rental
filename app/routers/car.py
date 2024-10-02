@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import oauth2
 from app.core.database import get_db
-from app.schemas.car import CarBase, CarCreate, CarDisplay
+from app.schemas.car import CarCreate, CarDisplay, CarUpdate
 from app.schemas.enums import (
     CarEngineType,
     CarSearchSortDirection,
@@ -174,7 +174,7 @@ def get_car(
 )
 def update_car(
     car_id: int,
-    request: CarBase,
+    request: CarUpdate,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -183,13 +183,21 @@ def update_car(
 
     Args:
         car_id (int): The ID of the car to update.
-        request (CarBase): The updated car data.
+        request (CarUpdate): The updated car data.
         db (Session): Database session dependency.
         current_user (Any): The authenticated user performing the update.
 
     Returns:
         Any: The updated car data after the operation.
     """
+    db_car = car.get_car(db, car_id)
+
+    if current_user.user_type != UserType.ADMIN and db_car.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to update this car",
+        )
+
     return car.update_car(db, car_id, request)
 
 
