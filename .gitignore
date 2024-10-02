@@ -166,4 +166,4 @@ car_rental.db
 app/static/logs/error.txt
 app/static/logs/info.txt
 alembic.ini
-alembic/
+alembic/versions/
