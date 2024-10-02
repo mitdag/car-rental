@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.schemas.user import UserDisplay
 
@@ -26,6 +26,20 @@ class CarCreate(BaseModel):
     price_per_day: float
     description: Optional[str] = None
     is_listed: bool = True
+
+    class Config:
+        from_attributes = True
+
+
+class CarUpdate(BaseModel):
+    make: Optional[str] = None
+    model: Optional[str] = None
+    year: Optional[int] = Field(None, ge=1900, le=2025)
+    transmission_type: Optional[str] = None
+    motor_type: Optional[str] = None
+    price_per_day: Optional[float] = Field(None, ge=0)
+    description: Optional[str] = None
+    is_listed: Optional[bool] = None
 
     class Config:
         from_attributes = True
