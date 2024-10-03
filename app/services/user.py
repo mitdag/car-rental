@@ -10,6 +10,7 @@ from app.models.user import DBUser
 from app.schemas.address import AddressForm
 from app.schemas.user import UserProfileForm
 from app.services import address as address_service
+from app.utils.hash import Hash
 
 
 def get_user_by_id(user_id: int, db: Session):
@@ -132,3 +133,21 @@ def is_user_profile_complete(user_id, db):
             and user.is_verified
             and address_service.is_user_address_complete(user_id, db)
         )
+
+
+def change_password(user_id: int, new_password: str, db: Session):
+    if not new_password or new_password.strip() == "":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Empty password"
+        )
+
+    user = db.query(DBUser).filter(DBUser.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No such user"
+        )
+
+    user.password = Hash.bcrypt(new_password.strip())
+    db.commit()
+    db.flush(user)
+    return {"user_id": user, "result": "Password is changed"}

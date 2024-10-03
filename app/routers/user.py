@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Union
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
-from fastapi import Path as FastAPI_Path
+from fastapi import Path
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2
@@ -55,7 +55,7 @@ def get_users(
 
 @router.get("/{user_id}", response_model=Union[UserDisplay, UserPublicDisplay])
 def get_user(
-    user_id: int = FastAPI_Path(...),
+    user_id: int = Path(...),
     db: Session = Depends(database.get_db),
     current_user: UserBase = Depends(oauth2.get_current_user),
 ):
@@ -67,7 +67,7 @@ def get_user(
 @router.put("/{user_id}", response_model=Dict[str, Union[UserDisplay, bool]])
 def modify_user_profile(
     user_profile: UserProfileForm,
-    user_id: int = FastAPI_Path(...),
+    user_id: int = Path(...),
     db: Session = Depends(database.get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -106,7 +106,7 @@ def delete_user(
 
 @router.get("/{user_id}/cars", response_model=List[CarDisplay], tags=["user", "cars"])
 def read_cars_by_user(
-    user_id: int = FastAPI_Path(...),
+    user_id: int = Path(...),
     db: Session = Depends(database.get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -115,3 +115,18 @@ def read_cars_by_user(
     if not cars:
         raise HTTPException(status_code=404, detail="Cars not found for this user")
     return cars
+
+
+@router.put(
+    "/{user_id}/password",
+    summary="Change password",
+    description="This endpoint is used to change user's password.",
+)
+def change_password(
+    new_password: str,
+    user_id: int = Path(...),
+    db: Session = Depends(database.get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    check_user_id_and_path_parameter(current_user.id, user_id)
+    return user_service.change_password(user_id, new_password, db)
