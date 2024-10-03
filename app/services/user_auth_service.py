@@ -185,8 +185,12 @@ def process_change_password(password: str, confirm_id: int, key: str, db: Sessio
     if not is_valid_user["result"]:
         return is_valid_user
 
+    if not password or password.strip() == "":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Empty password"
+        )
     user = is_valid_user["user"]
-    user.password = Hash.bcrypt(password)
+    user.password = Hash.bcrypt(password.strip())
     db.commit()
     db.flush(user)
     return {

@@ -16,7 +16,7 @@ router = APIRouter(prefix="/signup", tags=["signup/login"])
 
 @router.post(
     "",
-    summary="Send a 'signup with email' request",
+    summary="Start a 'signup with email' process",
     description="This endpoint used for the users who want to signup by using their email. "
     "Signup process does not end at this endpoint. link to the provided email address."
     "Users who want to signup with social media accounts use login endpoint.",
@@ -44,7 +44,7 @@ def signup(
 @router.get(
     "",
     response_class=HTMLResponse,
-    summary="Finalize the signup process",
+    summary="Finalize the 'signup with email' process",
     description="This endpoint is triggered when the user clicks the signup confirmation "
     "link in the email. It returns an html code to inform the user about the "
     "success/failure of the signup process.",

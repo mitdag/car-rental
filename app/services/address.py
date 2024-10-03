@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from app.models.address import DBAddress
-from app.schemas.address import AddressDisplay
+from app.models.user import DBUser
+from app.schemas.address import AddressForm, create_address_private_display
 from app.utils.address_translation import address_to_lat_lon
 
 
@@ -17,8 +18,8 @@ def get_address_by_user_id(user_id: int, db: Session):
     return address
 
 
-def update_user_address(user_id: int, address_profile: AddressDisplay, db: Session):
-    address = db.query(DBAddress).filter(DBAddress.user_id == user_id).first()
+def update_user_address(user: DBUser, address_profile: AddressForm, db: Session):
+    address = db.query(DBAddress).filter(DBAddress.user_id == user.id).first()
     if address:
         db.delete(address)
 
@@ -31,27 +32,28 @@ def update_user_address(user_id: int, address_profile: AddressDisplay, db: Sessi
             "country": address_profile.country,
         }
     )
+
+    new_address = DBAddress(
+        user_id=user.id,
+        street=address_profile.street,
+        number=address_profile.number,
+        postal_code=address_profile.postal_code,
+        city=address_profile.city,
+        state=address_profile.state,
+        country=address_profile.country,
+        latitude=lat_long["latitude"],
+        longitude=lat_long["longitude"],
+        is_address_confirmed=lat_long["latitude"] is not None
+        and lat_long["longitude"] is not None,
+        created_at=datetime.datetime.utcnow(),
+    )
     if lat_long["latitude"] and lat_long["longitude"]:
-        new_address = DBAddress(
-            user_id=user_id,
-            street=address_profile.street,
-            number=address_profile.number,
-            postal_code=address_profile.postal_code,
-            city=address_profile.city,
-            state=address_profile.state,
-            country=address_profile.country,
-            latitude=lat_long["latitude"],
-            longitude=lat_long["longitude"],
-            is_address_confirmed=lat_long["latitude"] is not None
-            and lat_long["longitude"] is not None,
-            created_at=datetime.datetime.utcnow(),
-        )
         db.add(new_address)
         db.commit()
         db.flush(new_address)
         address_profile.latitude = new_address.latitude
         address_profile.longitude = new_address.longitude
-    return address_profile
+    return create_address_private_display(user)
 
 
 def delete_user_address(user_id: int, db: Session):

@@ -142,7 +142,7 @@ def change_password(
     )
 
 
-@router.put(
+@router.post(
     "/password-form",
     response_class=HTMLResponse,
     summary="Send change password form",
