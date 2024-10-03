@@ -28,7 +28,7 @@ def check_user_id_and_path_parameter(user_id: int, path_param: int):
     if user_id != path_param:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Can not update another user.",
+            detail="Can not query another users.",
         )
 
 

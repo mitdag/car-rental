@@ -27,14 +27,14 @@ class UserBase(BaseModel):
 
 class UserDisplay(BaseModel):
     id: int
-    name: str = None
-    last_name: str = None
-    email: str
-    login_method: LoginMethod
-    phone_number: str = None
-    user_type: UserType
-    is_verified: bool = False
-    is_profile_completed: bool = False
+    name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    login_method: Optional[LoginMethod] = LoginMethod.EMAIL
+    phone_number: Optional[str] = None
+    user_type: Optional[UserType] = UserType.USER
+    is_verified: Optional[bool] = False
+    is_profile_completed: Optional[bool] = False
     address: Optional[AddressDisplay]
 
     class Config:
@@ -67,6 +67,8 @@ class UserPublicDisplay(BaseModel):
 
 
 def create_user_private_display(user: DBUser):
+    if not user:
+        return None
     return UserDisplay(
         id=user.id,
         name=user.name,
@@ -82,6 +84,8 @@ def create_user_private_display(user: DBUser):
 
 
 def create_user_public_display(user: DBUser):
+    if not user:
+        return None
     return UserPublicDisplay(
         id=user.id,
         name=user.name,

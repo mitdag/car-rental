@@ -16,15 +16,15 @@ class AddressBase(BaseModel):
 
 
 class AddressDisplay(BaseModel):
-    street: str
-    number: str
-    postal_code: str
-    city: str
-    state: str
-    country: str
-    latitude: float = None
-    longitude: float = None
-    is_address_confirmed: bool = False
+    street: Optional[str] = None
+    number: Optional[str] = None
+    postal_code: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    is_address_confirmed: Optional[bool] = False
 
     class Config:
         from_attributes = True
@@ -44,15 +44,17 @@ class AddressForm(BaseModel):
 
 
 class AddressDisplayPublic(BaseModel):
-    city: str
-    state: str
-    country: str
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 
 def create_address_private_display(user: DBUser):
+    if not user or not user.address:
+        return None
     return AddressDisplay(
         street=user.address.street,
         number=user.address.number,
@@ -67,6 +69,8 @@ def create_address_private_display(user: DBUser):
 
 
 def create_address_public_display(user: DBUser):
+    if not user or not user.address:
+        return None
     return AddressDisplayPublic(
         city=user.address.city, state=user.address.state, country=user.address.country
     )

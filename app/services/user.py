@@ -55,12 +55,20 @@ def modify_user(user_id: int, user_profile: UserProfileForm, db: Session):
             status_code=status.HTTP_400_BAD_REQUEST, detail="User does not exist."
         )
 
+    changed = False
     if user_profile.name:
         user.name = user_profile.name
+        changed = True
     if user_profile.last_name:
         user.last_name = user_profile.last_name
+        changed = True
     if user_profile.phone_number:
         user.phone_number = user_profile.phone_number
+        changed = True
+    if not changed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No update is received"
+        )
     user.is_profile_completed = (
         user.last_name != "" and user.last_name != "" and user.phone_number != ""
     )
@@ -85,7 +93,9 @@ def modify_user(user_id: int, user_profile: UserProfileForm, db: Session):
     return {
         "profile": user,
         "is_profile_completed": user.is_profile_completed,
-        "is_address_confirmed": (address_profile.latitude and address_profile.longitude)
+        "is_address_confirmed": (
+            address_profile and address_profile.latitude and address_profile.longitude
+        )
         is not None,
     }
 
