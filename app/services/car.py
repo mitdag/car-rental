@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Union
 
 from fastapi import HTTPException, status
 from sqlalchemy import and_, func, literal_column, select
@@ -9,7 +9,12 @@ from app.models.address import DBAddress
 from app.models.car import DBCar
 from app.models.user import DBUser
 from app.schemas.car import CarBase, CarUpdate
-from app.schemas.enums import CarSearchSortDirection, CarSearchSortType
+from app.schemas.enums import (
+    CarSearchSortDirection,
+    CarSearchSortType,
+    CarTransmissionType,
+    CarEngineType,
+)
 from app.utils.logger import logger
 
 # Database Operations
@@ -100,8 +105,8 @@ def search_cars(
     booking_date_start: datetime,
     booking_date_end: datetime,
     search_in_city: str,
-    engine_type: str,
-    transmission_type: str,
+    engine_type: CarEngineType,
+    transmission_type: CarTransmissionType,
     price_min: int,
     price_max: int,
     make: str,
@@ -110,7 +115,33 @@ def search_cars(
     skip: int,
     limit: int,
     db: Session,
-):
+) -> Dict[str, Union[Optional[int], List[DBCar]]]:
+    """
+    :param distance_km: Distance from the renter or the city (if city is specified renter location is ignored)
+    :param renter_lat: Latitude of the renter in degrees
+    :param renter_lon: Longitude of the renter in degrees
+    :param booking_date_start: Start date of the booking
+    :param booking_date_end: End date of the booking
+    :param search_in_city: Name of the city to search in
+    :param engine_type: Type of the car's engine
+    :param transmission_type: Type of the car's transmission
+    :param price_min: Minimum price per day
+    :param price_max: Maximum price per day
+    :param make: Make of the car
+    :param sort: The column name according to which the result list will be sorted.
+    :param sort_direction: Direction of the sort
+    :param skip: Offset for pagination
+    :param limit: Maximum length of the resulting list
+    :param db: App session
+    :return: A dictionary of:
+        {
+            "current_offset": Value of parameter skip (int),
+            "counts": Length of the resulting DBCar list (int)
+            "total_counts": Total number of matches ignoring the limit value,
+            "next_offset": Starting index of the following request in pagination (None if no more records exist),
+            "cars": List of matching DBCar objects
+        }
+    """
     if (
         not distance_km
         and not booking_date_start
@@ -139,7 +170,8 @@ def search_cars(
     if sort:
         if not sort_direction:
             sort_direction = CarSearchSortDirection.ASC
-        if sort == CarSearchSortType.DISTANCE:
+        # Ignore the sort request if it is "DISTANCE" and a distance value is not provided
+        if distance_km and sort == CarSearchSortType.DISTANCE:
             sort_by = (
                 literal_column("distance").asc()
                 if sort_direction == CarSearchSortDirection.ASC
@@ -170,7 +202,7 @@ def search_cars(
                 else DBCar.price_per_day.desc()
             )
 
-    queries = [
+    selected_attrs = [
         DBUser.id.label("owner_id"),
         DBUser.name.label("owner_name"),
         DBUser.last_name.label("owner_last_name"),
@@ -187,21 +219,21 @@ def search_cars(
         DBCar.description,
     ]
     where_clause = [DBUser.id == DBAddress.user_id, DBUser.id == DBCar.owner_id]
+
+    # Query for distance calculation. The resulting value will appear as "distance" in query result.
+    position_field = None
     if renter_lat and renter_lon:
-        queries.append(
-            (
-                6371.0
-                * func.acos(
-                    func.cos(func.radians(renter_lat))
-                    * func.cos(func.radians(DBAddress.latitude))
-                    * func.cos(
-                        func.radians(DBAddress.longitude) - func.radians(renter_lon)
-                    )
-                    + func.sin(func.radians(renter_lat))
-                    * func.sin(func.radians(DBAddress.latitude))
-                )
-            ).label("distance")
-        )
+        position_field = (
+            6371.0
+            * func.acos(
+                func.cos(func.radians(renter_lat))
+                * func.cos(func.radians(DBAddress.latitude))
+                * func.cos(func.radians(DBAddress.longitude) - func.radians(renter_lon))
+                + func.sin(func.radians(renter_lat))
+                * func.sin(func.radians(DBAddress.latitude))
+            )
+        ).label("distance")
+        selected_attrs.append(position_field)
         where_clause.append(DBUser.id == DBAddress.user_id)
     if distance_km:
         where_clause.append(literal_column("distance") < distance_km)
@@ -221,9 +253,30 @@ def search_cars(
     if booking_date_start:
         # TODO implement after rental
         pass
-    result = (
+
+    # Query for counting the matches without applying the limit value. If search is based on distance,
+    # the query for distance calculation must also be included in this query (since "distance" is literal value).
+    if distance_km:
+        total_counts = (
+            db.execute(
+                select(
+                    position_field, func.count(DBCar.id).label("total_counts")
+                ).where(and_(*where_clause))
+            )
+            .mappings()
+            .first()
+        )
+    else:
+        total_counts = (
+            db.execute(
+                select(func.count().label("total_counts")).where(and_(*where_clause))
+            )
+            .mappings()
+            .first()
+        )
+    cars = (
         db.execute(
-            select(*queries)
+            select(*selected_attrs)
             .where(and_(*where_clause))
             .order_by(sort_by)
             .offset(skip)
@@ -232,8 +285,11 @@ def search_cars(
         .mappings()
         .all()
     )
-
-    return {
-        "cars": result,
-        "next_offset": (skip + limit) if len(result) == limit else None,
+    result = {
+        "current_offset": skip,
+        "counts": len(cars),
+        "total_counts": total_counts["total_counts"],
+        "next_offset": (skip + limit) if len(cars) == limit else None,
+        "cars": cars,
     }
+    return result

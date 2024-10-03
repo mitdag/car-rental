@@ -94,33 +94,40 @@ def list_cars(
 def search_car(
     distance_km: float = Query(
         default=None,
+        ge=1,
         description="Radius of the search in kilometers "
         "(ignored if search_in_city is also set)",
     ),
     search_in_city: str = Query(default=None, description="Name of the city to search"),
-    renter_lat: float = Query(None, description="Latitude of the user's location"),
-    renter_lon: float = Query(None, description="Longitude of the user's location"),
+    renter_lat: float = Query(
+        None, ge=-90, le=90, description="Latitude of the user's location"
+    ),
+    renter_lon: float = Query(
+        None, ge=-180, le=180, description="Longitude of the user's location"
+    ),
     booking_date_start: datetime = Query(
         None, description="Start day of the booking. (NOT IMPLEMENTED YET)"
     ),
     booking_date_end: datetime = Query(
         None, description="End day of the booking. (NOT IMPLEMENTED YET)"
     ),
-    engine_type: str = Query(
-        None, description=f"Any of the types {CarEngineType.list()}"
+    engine_type: CarEngineType = Query(None, description="Select an engine type"),
+    transmission_type: CarTransmissionType = Query(
+        None, description="Select a transmission type"
     ),
-    transmission_type: str = Query(
-        None, description=f"Any of the types {CarTransmissionType.list()}"
-    ),
-    price_min: int = Query(None, description="Minimum daily price for the rent"),
-    price_max: int = Query(None, description="Maximum daily price for the rent"),
+    price_min: int = Query(None, ge=0, description="Minimum daily price for the rent"),
+    price_max: int = Query(None, ge=1, description="Maximum daily price for the rent"),
     make: str = Query(None, description="Make of the car"),
     sort: CarSearchSortType = Query(None, description="Sort parameter"),
     sort_direction: CarSearchSortDirection = Query(None, description="Sort direction"),
-    skip: int = Query(default=0, description="Used for pagination for the requests."),
+    skip: int = Query(
+        default=0, ge=0, description="Used for pagination for the requests."
+    ),
     limit: int = Query(
         constants.QUERY_LIMIT_DEFAULT,
-        description=f"Length of the response list (max: {constants.QUERY_LIMIT_MAX})",
+        ge=1,
+        le=constants.QUERY_LIMIT_MAX,
+        description="Length of the response list",
     ),
     db: Session = Depends(get_db),
 ):
