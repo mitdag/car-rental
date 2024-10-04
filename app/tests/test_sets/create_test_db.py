@@ -1,18 +1,17 @@
 import os
-from pathlib import Path
-
-from sqlalchemy.orm import Session
-from sqlalchemy import insert
-from fastapi import Depends
-from fastapi import APIRouter
-from random import randint, random
 from datetime import datetime
+from pathlib import Path
+from random import choice, randint, random
+
+from fastapi import APIRouter, Depends
+from sqlalchemy import insert
+from sqlalchemy.orm import Session
 
 from app.core import database
 from app.models.address import DBAddress
 from app.models.car import DBCar
 from app.models.user import DBUser
-from app.schemas.enums import LoginMethod, UserType
+from app.schemas.enums import CarEngineType, CarTransmissionType, LoginMethod, UserType
 from app.utils.hash import Hash
 
 email_providers = ["google.com", "hotmail.com", "yahoo.com"]
@@ -35,7 +34,7 @@ def read_file(file_name):
     return buf
 
 
-# @router.get("/create-test-all")
+@router.get("/create-test-all")
 def create_test_all(db: Session = Depends(database.get_db)):
     create_test_users(db)
     create_test_cars(db)
@@ -132,8 +131,8 @@ def create_test_cars(db: Session = Depends(database.get_db)):
                 "make": makes[rand_index],
                 "model": models[rand_index],
                 "year": randint(2015, 2024),
-                "transmission_type": "manual" if randint(0, 1) == 0 else "automatic",
-                "motor_type": "Gasoline" if randint(0, 1) == 0 else "Electric",
+                "transmission_type": choice(CarTransmissionType.list()),
+                "motor_type": choice(CarEngineType.list()),
                 "price_per_day": randint(75, 150),
                 "description": "",
                 "is_listed": True,
