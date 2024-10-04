@@ -1,15 +1,15 @@
 import os
 import shutil
-
-from fastapi import status, UploadFile
-from fastapi.exceptions import HTTPException
-from sqlalchemy.orm import Session
 from pathlib import Path as pathlib_path
 
+from fastapi import UploadFile, status
+from fastapi.exceptions import HTTPException
+from sqlalchemy.orm import Session
+
 from app.models.user import DBUser
-from app.schemas.address import AddressForm
 from app.schemas.user import UserProfileForm
 from app.services import address as address_service
+from app.utils import logger
 from app.utils.hash import Hash
 
 
@@ -49,55 +49,55 @@ def get_user_profile(user_id: int, db: Session):
 
 
 def modify_user(user_id: int, user_profile: UserProfileForm, db: Session):
-    user = db.query(DBUser).filter(user_id == DBUser.id).first()
-    if not user:
+    db_user = db.query(DBUser).filter(user_id == DBUser.id).first()
+    if not db_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="User does not exist."
         )
 
-    changed = False
-    if user_profile.name:
-        user.name = user_profile.name
-        changed = True
-    if user_profile.last_name:
-        user.last_name = user_profile.last_name
-        changed = True
-    if user_profile.phone_number:
-        user.phone_number = user_profile.phone_number
-        changed = True
-    if not changed:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="No update is received"
-        )
-    user.is_profile_completed = (
-        user.last_name != "" and user.last_name != "" and user.phone_number != ""
+    db_user.is_profile_completed = (
+        db_user.last_name != ""
+        and db_user.last_name != ""
+        and db_user.phone_number != ""
     )
 
-    db.add(user)
-    db.commit()
-    db.flush(user)
+    if db_user:
+        update_data = user_profile.model_dump(exclude_unset=True, exclude={"address"})
+        for key, value in update_data.items():
+            setattr(db_user, key, value)
 
-    address_profile = address_service.update_user_address(
-        user=user,
-        address_profile=AddressForm(
-            street=user_profile.street,
-            number=user_profile.number,
-            postal_code=user_profile.postal_code,
-            city=user_profile.city,
-            state=user_profile.state,
-            country=user_profile.country,
-            is_address_confirmed=False,
-        ),
-        db=db,
-    )
-    return {
-        "profile": user,
-        "is_profile_completed": user.is_profile_completed,
-        "is_address_confirmed": (
-            address_profile and address_profile.latitude and address_profile.longitude
+        try:
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+        except Exception as exc:
+            logger.error(exc)
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"An error occurred while updating the car: {str(exc)}",
+            )
+
+    # Check if address needs to be updated
+    if user_profile.address:
+        address_profile = address_service.update_user_address(
+            user=db_user,
+            address_update=user_profile.address,
+            db=db,
         )
-        is not None,
-    }
+        return {
+            "profile": db_user,
+            "is_profile_completed": db_user.is_profile_completed,
+            "is_address_confirmed": (
+                address_profile
+                and address_profile.latitude
+                and address_profile.longitude
+            )
+            is not None,
+        }
+
+    else:
+        return db_user
 
 
 def upload_user_profile_picture(picture: UploadFile, user_id: int):
