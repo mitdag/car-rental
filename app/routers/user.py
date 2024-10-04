@@ -1,13 +1,19 @@
 from typing import Dict, List, Optional, Union
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
-from fastapi import Path
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    Path,
+    Query,
+    UploadFile,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2
 from app.core import database
-
-from app.utils import constants
 from app.schemas.car import CarDisplay
 from app.schemas.enums import UserType
 from app.schemas.user import (
@@ -15,13 +21,14 @@ from app.schemas.user import (
     UserDisplay,
     UserProfileForm,
     UserPublicDisplay,
-    create_user_public_display,
     create_user_private_display,
+    create_user_public_display,
 )
 from app.services import car as car_service
 from app.services import user as user_service
+from app.utils import constants
 
-router = APIRouter(prefix="/users", tags=["user"])
+router = APIRouter(prefix="/users", tags=["users"])
 
 
 def check_user_id_and_path_parameter(user_id: int, path_param: int):
