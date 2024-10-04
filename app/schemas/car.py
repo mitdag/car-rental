@@ -58,7 +58,7 @@ class CarCreate(BaseModel):
 class CarUpdate(BaseModel):
     make: Optional[str] = None
     model: Optional[str] = None
-    year: Optional[int] = None
+    year: Optional[int] = Field(default=datetime.utcnow().year)
     transmission_type: Optional[CarTransmissionType] = None
     motor_type: Optional[CarEngineType] = None
     price_per_day: Optional[float] = Field(None, ge=0)
