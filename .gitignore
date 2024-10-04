@@ -167,3 +167,4 @@ app/static/logs/error.txt
 app/static/logs/info.txt
 alembic.ini
 alembic/versions/
+.vscode/settings.json

@@ -3,6 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.schemas.enums import CarEngineType, CarTransmissionType
 from app.schemas.user import UserDisplay
 
 
@@ -22,8 +23,8 @@ class CarBase(BaseModel):
     make: str
     model: str
     year: int = Field(default=datetime.utcnow().year)
-    transmission_type: str
-    motor_type: str
+    transmission_type: CarTransmissionType
+    motor_type: CarEngineType
     price_per_day: float
     description: Optional[str] = None
     is_listed: bool = True
@@ -40,8 +41,8 @@ class CarCreate(BaseModel):
     make: str
     model: str
     year: int = Field(default=datetime.utcnow().year)
-    transmission_type: str
-    motor_type: str
+    transmission_type: CarTransmissionType
+    motor_type: CarEngineType
     price_per_day: float
     description: Optional[str] = None
     is_listed: bool = True
@@ -58,8 +59,8 @@ class CarUpdate(BaseModel):
     make: Optional[str] = None
     model: Optional[str] = None
     year: Optional[int] = None
-    transmission_type: Optional[str] = None
-    motor_type: Optional[str] = None
+    transmission_type: Optional[CarTransmissionType] = None
+    motor_type: Optional[CarEngineType] = None
     price_per_day: Optional[float] = Field(None, ge=0)
     description: Optional[str] = None
     is_listed: Optional[bool] = None
@@ -80,8 +81,8 @@ class CarDisplay(BaseModel):
     make: str
     model: str
     year: int
-    transmission_type: str
-    motor_type: str
+    transmission_type: CarTransmissionType
+    motor_type: CarEngineType
     price_per_day: float
     description: Optional[str]
     is_listed: bool
