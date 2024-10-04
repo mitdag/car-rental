@@ -1,12 +1,14 @@
-import datetime
-
-from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
 
 from app.models.address import DBAddress
 from app.models.user import DBUser
-from app.schemas.address import AddressForm, create_address_private_display
-from app.utils.address_translation import address_to_lat_lon
+from app.schemas.address import (
+    AddressForm,
+    AddressUpdate,
+    create_address_private_display,
+)
+from app.utils.logger import logger
 
 
 def get_address_by_user_id(user_id: int, db: Session):
@@ -18,41 +20,45 @@ def get_address_by_user_id(user_id: int, db: Session):
     return address
 
 
-def update_user_address(user: DBUser, address_profile: AddressForm, db: Session):
-    address = db.query(DBAddress).filter(DBAddress.user_id == user.id).first()
-    if address:
-        db.delete(address)
+def update_user_address(user: DBUser, address_update: AddressUpdate, db: Session):
+    db_address = db.query(DBAddress).filter(DBAddress.user_id == user.id).first()
+    if db_address:
+        # Convert AddressUpdate to AddressForm which has latitude and longitude
+        update_data = AddressForm(
+            **address_update.model_dump(exclude_unset=True)
+        ).model_dump(exclude_unset=True)
 
-    lat_long = address_to_lat_lon(
-        {
-            "street": f"{address_profile.number} {address_profile.street}",
-            "postalcode": address_profile.postal_code,
-            "city": address_profile.city,
-            "state": address_profile.state,
-            "country": address_profile.country,
-        }
-    )
+        for key, value in update_data.items():
+            setattr(db_address, key, value)
 
-    new_address = DBAddress(
-        user_id=user.id,
-        street=address_profile.street,
-        number=address_profile.number,
-        postal_code=address_profile.postal_code,
-        city=address_profile.city,
-        state=address_profile.state,
-        country=address_profile.country,
-        latitude=lat_long["latitude"],
-        longitude=lat_long["longitude"],
-        is_address_confirmed=lat_long["latitude"] is not None
-        and lat_long["longitude"] is not None,
-        created_at=datetime.datetime.utcnow(),
-    )
-    if lat_long["latitude"] and lat_long["longitude"]:
-        db.add(new_address)
-        db.commit()
-        db.flush(new_address)
-        address_profile.latitude = new_address.latitude
-        address_profile.longitude = new_address.longitude
+        try:
+            db.add(db_address)
+            db.commit()
+            db.refresh(db_address)
+        except Exception as exc:
+            logger.error(exc)
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"An error occurred while updating the address: {str(exc)}",
+            )
+    # If address doesnt exist before create new
+    else:
+        # Raises error if it cant generate coordinates
+        new_address = AddressForm(**address_update.model_dump(exclude_unset=True))
+
+        try:
+            db_new_address = DBAddress(**new_address.model_dump(), user_id=user.id)
+            db.add(db_new_address)
+            db.commit()
+            db.flush(db_new_address)
+        except Exception as exc:
+            logger.error(exc)
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"An error occurred while updating the address: {str(exc)}",
+            )
     return create_address_private_display(user)
 
 
