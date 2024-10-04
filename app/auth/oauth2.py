@@ -81,3 +81,32 @@ def admin_only(
             detail="Access denied. Admin privileges required.",
         )
     return current_user
+
+
+def complete_user_profile_only(
+    current_user=Depends(get_current_user),
+    db: Session = Depends(database.get_db),
+):
+    """
+    Dependency that restricts access to users with complete profiles only.
+
+    This function checks if the current user has a complete profile. If the profile is not complete,
+    it raises an HTTP 403 Forbidden exception. If the profile is complete, it returns the user object.
+
+    Args:
+        current_user: A dependency that retrieves the currently authenticated user.
+        db: A dependency that provides the database session.
+
+    Raises:
+        HTTPException: If the user's profile is not complete, an exception with status code 403 is raised.
+    """
+    # Check if the user's profile is complete
+    is_complete = user.is_user_profile_complete(current_user.id, db)
+
+    if not is_complete:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. Please complete your profile before accessing this resource.",
+        )
+
+    return current_user
