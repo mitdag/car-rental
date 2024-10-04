@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2
@@ -171,7 +172,24 @@ def get_car(
     Returns:
         CarDisplay: The details of the car with the specified ID.
     """
-    return car.get_car(db, car_id)
+    try:
+        db_car = car.get_car(db, car_id)
+        # Check if the database car record has different model than response model
+        CarDisplay.model_validate(db_car)
+        return db_car
+    except ValidationError as e:
+        # Validation Error for pydantic
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Validation error occurred: {e.errors()}",
+        )
+
+    except Exception as e:
+        # Catch any other unforeseen errors.
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred: {str(e)}",
+        )
 
 
 @router.put(
