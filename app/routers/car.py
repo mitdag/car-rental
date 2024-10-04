@@ -38,7 +38,7 @@ router = APIRouter(prefix="/cars", tags=["cars"])
 def create_car(
     request: CarCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user=Depends(oauth2.complete_user_profile_only),
 ):
     """
     Create a new car entry in the database.
