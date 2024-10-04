@@ -71,7 +71,7 @@ def get_user(
     return create_user_public_display(user_service.get_user_by_id(user_id, db))
 
 
-@router.put("/{user_id}", response_model=Dict[str, Union[UserDisplay, bool]])
+@router.put("/{user_id}")
 def modify_user_profile(
     user_profile: UserProfileForm,
     user_id: int = Path(...),
