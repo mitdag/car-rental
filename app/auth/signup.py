@@ -11,7 +11,7 @@ from app.core import database
 
 from app.utils import email_sender
 
-router = APIRouter(prefix="/signup", tags=["signup/login"])
+router = APIRouter(prefix="/signup", tags=["auth"])
 
 
 @router.post(

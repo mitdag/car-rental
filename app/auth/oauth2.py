@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -9,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core import database
 from app.schemas.enums import UserType
 from app.services import user
-from app.utils.constants import ACCESS_TOKEN_EXPIRE_MINUTES
+from app.utils.constants import ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
 from app.utils.logger import logger
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -19,19 +18,32 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 # ALGORITHM = os.getenv("ALGORITHM")
 # ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
 
-SECRET_KEY = "77407c7339a6c00544e51af1101c4abb4aea2a31157ca5f7dfd87da02a628107"
+SECRET_KEY_ACCESS_TOKEN = (
+    "77407c7339a6c00544e51af1101c4abb4aea2a31157ca5f7dfd87da02a628107"
+)
+SECRET_KEY_REFRESH_TOKEN = (
+    "4b3b7fe44b24928b5e686a04733dcda7b8980d202b0e9ada2056982bb8a62496"
+)
 ALGORITHM = "HS256"
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+def create_tokens(data: dict):
+    to_encode_access_token = data.copy()
+    to_encode_refresh_token = data.copy()
+    access_token_expire = datetime.utcnow() + timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+    refresh_token_expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode_access_token.update({"exp": access_token_expire})
+    to_encode_refresh_token.update({"exp": refresh_token_expire})
+    encoded_access_token_jwt = jwt.encode(
+        to_encode_access_token, SECRET_KEY_ACCESS_TOKEN, algorithm=ALGORITHM
+    )
+    encoded_refresh_token_jwt = jwt.encode(
+        to_encode_refresh_token, SECRET_KEY_REFRESH_TOKEN, algorithm=ALGORITHM
+    )
+    print(f"REFRESH KEY: {encoded_refresh_token_jwt}")
+    return encoded_access_token_jwt, encoded_refresh_token_jwt
 
 
 def get_current_user(
@@ -44,7 +56,7 @@ def get_current_user(
     )
 
     try:
-        token = jwt.decode(token_enc, SECRET_KEY, algorithms=ALGORITHM)
+        token = jwt.decode(token_enc, SECRET_KEY_ACCESS_TOKEN, algorithms=ALGORITHM)
         user_email = token.get("username")
         current_user = user.get_user_by_email(user_email, db)
         if not current_user:
@@ -53,6 +65,29 @@ def get_current_user(
         logger.error("Could not authenticate")
         raise credential_exception
     return current_user
+
+
+def get_current_user_refresh_key(
+    refresh_token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)
+):
+    credential_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not verify credentials (credentials might have expired)",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        refresh_token = jwt.decode(
+            refresh_token, SECRET_KEY_REFRESH_TOKEN, algorithms=ALGORITHM
+        )
+        user_email = refresh_token.get("username")
+        current_user = user.get_user_by_email(user_email, db)
+        if not current_user:
+            raise Exception()
+    except Exception:
+        logger.error("Could not authenticate")
+        raise credential_exception
+    return current_user, refresh_token
 
 
 def admin_only(
