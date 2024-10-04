@@ -1,12 +1,12 @@
-from datetime import datetime
 import time
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
 
 from app.models.user import DBUser
 from app.schemas import address
-from app.schemas.address import AddressDisplay, AddressDisplayPublic
+from app.schemas.address import AddressDisplay, AddressDisplayPublic, AddressUpdate
 from app.schemas.enums import LoginMethod, UserType
 
 
@@ -41,7 +41,7 @@ class UserDisplay(BaseModel):
         from_attributes = True
 
 
-class UserProfileForm(BaseModel):
+class UserProfileFormOld(BaseModel):
     name: Optional[str] = None
     last_name: Optional[str] = None
     phone_number: Optional[str] = None
@@ -51,6 +51,16 @@ class UserProfileForm(BaseModel):
     city: Optional[str] = None
     state: Optional[str] = None
     country: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class UserProfileForm(BaseModel):
+    name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    address: Optional[AddressUpdate] = None
 
     class Config:
         from_attributes = True
