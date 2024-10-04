@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.auth import login, signup
+from app.auth import login, signup, logout
 from app.core.database import Base, engine
 from app.routers import car, user, favorites, review, rental
 from app.tests.test_sets import create_test_db
@@ -18,6 +18,7 @@ app.mount(
 
 app.include_router(signup.router)
 app.include_router(login.router)
+app.include_router(logout.router)
 app.include_router(user.router)
 app.include_router(car.router)
 app.include_router(review.router)

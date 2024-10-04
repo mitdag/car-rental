@@ -67,7 +67,7 @@ def modify_user(user_id: int, user_profile: UserProfileForm, db: Session):
         changed = True
     if not changed:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="No update is received"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No update is received ()"
         )
     user.is_profile_completed = (
         user.last_name != "" and user.last_name != "" and user.phone_number != ""

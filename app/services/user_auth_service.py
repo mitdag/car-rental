@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from app.models.fogot_password_confirmation import DBForgotPasswordConfirmation
+from app.models.refresh_token import DBRefreshToken
 from app.models.signup_confirmations import DBSignUpConfirmation
 from app.models.user import DBUser
 from app.schemas.enums import LoginMethod, UserType
@@ -133,17 +134,9 @@ def create_forgot_password_validation_entry(email: str, db: Session):
     }
 
 
-def check_confirmation(confirm_id: int, key: str, db: Session):
-    confirmation = (
-        db.query(DBForgotPasswordConfirmation)
-        .filter(
-            and_(
-                DBForgotPasswordConfirmation.id == confirm_id,
-                DBForgotPasswordConfirmation.key == key,
-            )
-        )
-        .first()
-    )
+def check_forgot_password_confirmation(confirm_id: int, key: str, db: Session):
+    confirmation = get_forgot_password_confirmation(confirm_id, key, db)
+
     if not confirmation:
         return {
             "result": False,
@@ -167,17 +160,37 @@ def check_user(email: str, db):
     return {"result": True, "user": user}
 
 
+def get_forgot_password_confirmation(confirmation_id: int, key: str, db: Session):
+    return (
+        db.query(DBForgotPasswordConfirmation)
+        .filter(
+            and_(
+                DBForgotPasswordConfirmation.id == confirmation_id,
+                DBForgotPasswordConfirmation.key == key,
+            )
+        )
+        .first()
+    )
+
+
+def delete_forgot_password_confirmation(confirmation_id, key, db):
+    confirmation = get_forgot_password_confirmation(confirmation_id, key, db)
+    if confirmation:
+        db.delete(confirmation)
+        db.commit()
+
+
 # This function is triggerd when the user clicks the change password link (email).
 def check_change_password_link_validity(confirm_id: int, key: str, db: Session):
-    is_valid_confirmation = check_confirmation(confirm_id, key, db)
+    is_valid_confirmation = check_forgot_password_confirmation(confirm_id, key, db)
     if not is_valid_confirmation["result"]:
         return is_valid_confirmation
     return check_user(is_valid_confirmation["email"], db)
 
 
 # This function is triggerd when the user clicks the send button on change password form (browser).
-def process_change_password(password: str, confirm_id: int, key: str, db: Session):
-    is_valid_confirmation = check_confirmation(confirm_id, key, db)
+def reset_change_password(password: str, confirm_id: int, key: str, db: Session):
+    is_valid_confirmation = check_forgot_password_confirmation(confirm_id, key, db)
     if not is_valid_confirmation["result"]:
         return is_valid_confirmation
 
@@ -197,3 +210,31 @@ def process_change_password(password: str, confirm_id: int, key: str, db: Sessio
         "result": True,
         "message": "Your password has been successfully changed. Please proceed to login.",
     }
+
+
+def save_refresh_token(user_email: str, token: str, db: Session):
+    if db.query(DBRefreshToken).filter(DBRefreshToken.email == user_email).first():
+        return False
+    new_token = DBRefreshToken()
+    new_token.email = user_email
+    new_token.token = Hash.bcrypt(token)
+    db.add(new_token)
+    db.commit()
+    db.flush(new_token)
+
+    return True
+
+
+def revoke_refresh_token(user_email: str, db: Session):
+    token = db.query(DBRefreshToken).filter(DBRefreshToken.email == user_email).first()
+    if token:
+        db.delete(token)
+        db.commit()
+
+
+def verify_refresh_token(user_email: str, token: str, db: Session):
+    db_token = (
+        db.query(DBRefreshToken).filter(DBRefreshToken.email == user_email).first()
+    )
+    if not db_token:
+        return False
