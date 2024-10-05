@@ -71,7 +71,10 @@ def get_user(
     return create_user_public_display(user_service.get_user_by_id(user_id, db))
 
 
-@router.put("/{user_id}")
+@router.put(
+    "/{user_id}",
+    response_model=UserDisplay,
+)
 def modify_user_profile(
     user_profile: UserProfileForm,
     user_id: int = Path(...),

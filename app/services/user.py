@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.models.user import DBUser
 from app.schemas.user import UserProfileForm
 from app.services import address as address_service
-from app.utils import logger
+from app.utils.logger import logger
 from app.utils.hash import Hash
 
 
@@ -61,43 +61,30 @@ def modify_user(user_id: int, user_profile: UserProfileForm, db: Session):
         and db_user.phone_number != ""
     )
 
-    if db_user:
-        update_data = user_profile.model_dump(exclude_unset=True, exclude={"address"})
-        for key, value in update_data.items():
-            setattr(db_user, key, value)
+    update_data = user_profile.model_dump(exclude_unset=True, exclude={"address"})
+    for key, value in update_data.items():
+        setattr(db_user, key, value)
 
-        try:
-            db.add(db_user)
-            db.commit()
-            db.refresh(db_user)
-        except Exception as exc:
-            logger.error(exc)
-            db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"An error occurred while updating the car: {str(exc)}",
-            )
+    try:
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+    except Exception as exc:
+        logger.error(exc)
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while updating the car: {str(exc)}",
+        )
 
     # Check if address needs to be updated
     if user_profile.address:
-        address_profile = address_service.update_user_address(
+        address_service.update_user_address(
             user=db_user,
             address_update=user_profile.address,
             db=db,
         )
-        return {
-            "profile": db_user,
-            "is_profile_completed": db_user.is_profile_completed,
-            "is_address_confirmed": (
-                address_profile
-                and address_profile.latitude
-                and address_profile.longitude
-            )
-            is not None,
-        }
-
-    else:
-        return db_user
+    return db_user
 
 
 def upload_user_profile_picture(picture: UploadFile, user_id: int):

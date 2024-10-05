@@ -26,7 +26,7 @@ class UserBase(BaseModel):
 
 
 class UserDisplay(BaseModel):
-    id: int
+    id: Optional[int] = None
     name: Optional[str] = None
     last_name: Optional[str] = None
     email: Optional[str] = None
@@ -35,7 +35,7 @@ class UserDisplay(BaseModel):
     user_type: Optional[UserType] = UserType.USER
     is_verified: Optional[bool] = False
     is_profile_completed: Optional[bool] = False
-    address: Optional[AddressDisplay]
+    address: Optional[AddressDisplay] = None
 
     class Config:
         from_attributes = True
