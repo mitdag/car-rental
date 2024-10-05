@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.auth import login, signup, logout
 from app.core.database import Base, engine
-from app.routers import car, user, favorites, review, rental
+from app.routers import car, user, favorites, review, rental, admin_user_tools
 from app.tests.test_sets import create_test_db
 
 
@@ -25,6 +25,7 @@ app.include_router(review.router)
 app.include_router(rental.router)
 app.include_router(create_test_db.router)
 app.include_router(favorites.router)
+app.include_router(admin_user_tools.router)
 
 Base.metadata.create_all(engine)
 
