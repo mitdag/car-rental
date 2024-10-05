@@ -34,6 +34,8 @@ class Logger:
 
 
 current_dir = Path(os.path.dirname(__file__)).as_posix()
-logs_path = current_dir[: current_dir.rindex("/")] + "/static/logs/"
+logs_path = current_dir[: current_dir.rindex("/")] + "../../logs/"
 
 logger = Logger(logs_path + "info.txt", logs_path + "error.txt")
+
+logger.error("test")
