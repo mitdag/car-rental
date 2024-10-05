@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.models.user import DBUser
 from app.schemas.user import UserProfileForm
 from app.services import address as address_service
+from app.utils.constants import PROFILE_PICTURES_PATH, DEFAULT_PROFILE_PICTURE_FILE
 from app.utils.logger import logger
 from app.utils.hash import Hash
 
@@ -87,14 +88,24 @@ def modify_user(user_id: int, user_profile: UserProfileForm, db: Session):
     return db_user
 
 
-def upload_user_profile_picture(picture: UploadFile, user_id: int):
+def get_picture_name_and_path(user_id: int):
     current_dir = pathlib_path(os.path.dirname(__file__)).as_posix()
     pictures_path = (
         current_dir[: current_dir.rindex("/")] + "/static/images/profile-pictures"
     )
+    file_name_no_ext = f"user_{(str(user_id)):0>6}"
+    files = list(
+        filter(
+            lambda x: x.find(file_name_no_ext) != -1,
+            [f for f in os.listdir(pictures_path)],
+        )
+    )
+    return files, file_name_no_ext, pictures_path
 
+
+def upload_user_profile_picture(picture: UploadFile, user_id: int):
+    current_files, file_name_no_ext, pictures_path = get_picture_name_and_path(user_id)
     _, upload_file_ext = os.path.splitext(picture.filename)
-    file_name = f"user_{(str(user_id)):0>6}{upload_file_ext}"
     allowed_types = ["image/jpeg", "image/png", "image/bmp", "image/webp"]
     if picture.content_type not in allowed_types:
         raise HTTPException(
@@ -102,10 +113,24 @@ def upload_user_profile_picture(picture: UploadFile, user_id: int):
             detail=f"Invalid file type. "
             f"Only {', '.join(list(map(lambda t: t.replace('image/', '').upper(), allowed_types)))} types are allowed.",
         )
-
-    with open(f"{pictures_path}/{file_name}", "w+b") as buffer:
+    for f in current_files:
+        os.remove(f"{pictures_path}/{f}")
+    with open(f"{pictures_path}/{file_name_no_ext}.{upload_file_ext}", "w+b") as buffer:
         shutil.copyfileobj(picture.file, buffer)
-    return {"file-name": file_name, "file-type": picture.content_type}
+    return {
+        "file-name": f"{file_name_no_ext}.{upload_file_ext}",
+        "file-type": picture.content_type,
+    }
+
+
+def get_profile_picture_link(user_id: int, db):
+    # Check if user exist (get_user_by_id raises exception if the user does not exist)
+    get_user_by_id(user_id, db)
+    current_files, _, _ = get_picture_name_and_path(user_id)
+    profile_picture_file = (
+        DEFAULT_PROFILE_PICTURE_FILE if len(current_files) == 0 else current_files[0]
+    )
+    return f"static/{PROFILE_PICTURES_PATH}/{profile_picture_file}"
 
 
 def delete_user(user_id: int, db: Session):

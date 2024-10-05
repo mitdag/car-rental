@@ -92,6 +92,7 @@ def modify_user_profile(
 
 @router.post("/{user_id}/profile-picture")
 def upload_profile_picture(
+    user_id: int = Path(...),
     picture: UploadFile = File(
         ...,
         description="Upload an image (JPEG, PNG, BMP, WEBP)",
@@ -99,11 +100,19 @@ def upload_profile_picture(
     ),
     current_user=Depends(oauth2.get_current_user),
 ):
+    check_user_id_and_path_parameter(current_user.id, user_id)
     if not picture:
         return HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Provide a picture"
         )
     return user_service.upload_user_profile_picture(picture, current_user.id)
+
+
+@router.get("/{user_id}/profile-picture")
+def get_profile_picture_link(
+    user_id: int = Path(...), db: Session = Depends(database.get_db)
+):
+    return user_service.get_profile_picture_link(user_id, db)
 
 
 @router.delete("")

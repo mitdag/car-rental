@@ -11,8 +11,8 @@ from app.tests.test_sets import create_test_db
 app = FastAPI()
 
 app.mount(
-    "/static/templates/static",
-    StaticFiles(directory="app/static/templates/static"),
+    "/static",
+    StaticFiles(directory="app/static"),
     name="static",
 )
 
