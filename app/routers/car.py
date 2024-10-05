@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import oauth2
 from app.core.database import get_db
-from app.schemas.car import CarCreate, CarDisplay, CarUpdate
+from app.schemas.car import CarCreate, CarDisplay, CarUpdate, RentalPeriod
 from app.schemas.enums import (
     CarEngineType,
     CarSearchSortDirection,
@@ -119,6 +119,7 @@ def search_car(
     price_min: int = Query(None, ge=0, description="Minimum daily price for the rent"),
     price_max: int = Query(None, ge=1, description="Maximum daily price for the rent"),
     make: str = Query(None, description="Make of the car"),
+    availability_period: RentalPeriod = Depends(),
     sort: CarSearchSortType = Query(None, description="Sort parameter"),
     sort_direction: CarSearchSortDirection = Query(None, description="Sort direction"),
     skip: int = Query(
@@ -144,6 +145,7 @@ def search_car(
         price_min=price_min,
         price_max=price_max,
         make=make,
+        availability_period=availability_period,
         sort=sort,
         sort_direction=sort_direction,
         skip=skip,

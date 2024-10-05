@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_validator
+from fastapi import Query, HTTPException, status
+
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.schemas.enums import CarEngineType, CarTransmissionType
 from app.schemas.user import UserDisplay
@@ -89,3 +91,38 @@ class CarDisplay(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class RentalPeriod(BaseModel):
+    availability_start_date: datetime = Query(
+        default=None, description="Available cars starting from this date"
+    )
+    availability_end_date: datetime = Query(
+        default=None, description="Available cars starting from this date"
+    )
+
+    class Config:
+        from_attributes = True
+
+    @model_validator(mode="before")
+    def validate_dates(cls, values):
+        start: datetime = values["availability_start_date"]
+        end: datetime = values["availability_end_date"]
+        if not start and not end:
+            return values
+        if (start and not end) or (not start and end):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Both start and end availability dates must be specified",
+            )
+        if start < datetime.utcnow():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Rental must be in the future.",
+            )
+        if start >= end:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Start date must be earlier than the end date.",
+            )
+        return values

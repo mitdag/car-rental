@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.models.address import DBAddress
 from app.models.car import DBCar
 from app.models.user import DBUser
-from app.schemas.car import CarBase, CarUpdate
+from app.schemas.car import CarBase, CarUpdate, RentalPeriod
 from app.schemas.enums import (
     CarSearchSortDirection,
     CarSearchSortType,
@@ -110,6 +110,7 @@ def search_cars(
     price_min: int,
     price_max: int,
     make: str,
+    availability_period: RentalPeriod,
     sort: CarSearchSortType,
     sort_direction: CarSearchSortDirection,
     skip: int,
