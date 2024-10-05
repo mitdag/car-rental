@@ -16,7 +16,7 @@ from app.utils import email_sender
 from app.utils.hash import Hash
 from app.utils.logger import logger
 
-router = APIRouter(prefix="/login", tags=["auth"])
+router = APIRouter(prefix="/login", tags=["auth-login"])
 
 
 class OAuth2PasswordRequestFormCustom(OAuth2PasswordRequestForm):
@@ -182,7 +182,7 @@ def refresh_key(
     db_token = db.query(DBRefreshToken).filter(DBRefreshToken.email == user.email)
     # At this point access_token provided by the user is valid (i.e. it was issued by this application and
     # it has not expired yet. However, we should make sure that the user did not revoke it (i.e. logged out)
-    # in the past. Thus it must be in our db.
+    # in the past. Thus, it must be in our db.
     if not db_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorised."

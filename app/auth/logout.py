@@ -6,7 +6,7 @@ from app.core import database
 from app.models.user import DBUser
 from app.services import user_auth_service
 
-router = APIRouter(prefix="/logout", tags=["auth"])
+router = APIRouter(prefix="/logout", tags=["auth-login"])
 
 
 @router.post(
