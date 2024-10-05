@@ -6,7 +6,6 @@ It allows users to create, read, update, and delete car records.
 Some actions require user authentication.
 """
 
-from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
@@ -106,12 +105,7 @@ def search_car(
     renter_lon: float = Query(
         None, ge=-180, le=180, description="Longitude of the user's location"
     ),
-    booking_date_start: datetime = Query(
-        None, description="Start day of the booking. (NOT IMPLEMENTED YET)"
-    ),
-    booking_date_end: datetime = Query(
-        None, description="End day of the booking. (NOT IMPLEMENTED YET)"
-    ),
+    availability_period: RentalPeriod = Depends(),
     engine_type: CarEngineType = Query(None, description="Select an engine type"),
     transmission_type: CarTransmissionType = Query(
         None, description="Select a transmission type"
@@ -119,7 +113,6 @@ def search_car(
     price_min: int = Query(None, ge=0, description="Minimum daily price for the rent"),
     price_max: int = Query(None, ge=1, description="Maximum daily price for the rent"),
     make: str = Query(None, description="Make of the car"),
-    availability_period: RentalPeriod = Depends(),
     sort: CarSearchSortType = Query(None, description="Sort parameter"),
     sort_direction: CarSearchSortDirection = Query(None, description="Sort direction"),
     skip: int = Query(
@@ -137,15 +130,13 @@ def search_car(
         distance_km=distance_km,
         renter_lat=renter_lat,
         renter_lon=renter_lon,
-        booking_date_start=booking_date_start,
-        booking_date_end=booking_date_end,
+        availability_period=availability_period,
         search_in_city=search_in_city,
         engine_type=engine_type,
         transmission_type=transmission_type,
         price_min=price_min,
         price_max=price_max,
         make=make,
-        availability_period=availability_period,
         sort=sort,
         sort_direction=sort_direction,
         skip=skip,

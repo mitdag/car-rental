@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List, Optional, Dict, Union
 
 from fastapi import HTTPException, status
@@ -102,15 +101,13 @@ def search_cars(
     distance_km: float,
     renter_lat: float,
     renter_lon: float,
-    booking_date_start: datetime,
-    booking_date_end: datetime,
+    availability_period: RentalPeriod,
     search_in_city: str,
     engine_type: CarEngineType,
     transmission_type: CarTransmissionType,
     price_min: int,
     price_max: int,
     make: str,
-    availability_period: RentalPeriod,
     sort: CarSearchSortType,
     sort_direction: CarSearchSortDirection,
     skip: int,
@@ -145,7 +142,7 @@ def search_cars(
     """
     if (
         not distance_km
-        and not booking_date_start
+        and not availability_period
         and not search_in_city
         and not engine_type
         and not transmission_type
@@ -164,8 +161,8 @@ def search_cars(
     # if city and distance both exists ignore lat and lon
     if distance_km and search_in_city:
         distance_km = None
-    if not booking_date_end:
-        booking_date_end = datetime.utcnow()
+    # if not booking_date_end:
+    #     booking_date_end = datetime.utcnow()
 
     sort_by = None
     if sort:
@@ -251,9 +248,9 @@ def search_cars(
         where_clause.append(DBCar.price_per_day <= price_max)
     if make:
         where_clause.append(DBCar.make == make)
-    if booking_date_start:
-        # TODO implement after rental
-        pass
+    # if booking_date_start:
+    #     # TODO implement after rental
+    #     pass
 
     # Query for counting the matches without applying the limit value. If search is based on distance,
     # the query for distance calculation must also be included in this query (since "distance" is literal value).
