@@ -168,3 +168,7 @@ app/static/logs/info.txt
 alembic.ini
 alembic/versions/
 .vscode/settings.json
+
+test.db
+insert_data_test_db.py
+reset_db.py
