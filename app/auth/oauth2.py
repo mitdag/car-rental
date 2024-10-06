@@ -48,6 +48,12 @@ def create_tokens(data: dict):
 def get_current_user(
     token_enc: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)
 ):
+    """
+    This function is used for confirming the user with provided access key
+    :param token_enc: Access token given to the user during login process.
+    :param db: app session
+    :return: Current user (DBUser object) if the user is confirmed, raises exception otherwise.
+    """
     credential_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not verify credentials (credentials might have expired)",
@@ -69,6 +75,12 @@ def get_current_user(
 def get_current_user_refresh_key(
     refresh_token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)
 ):
+    """
+    This function is used for confirming the user with provided refresh key during refresh key process.
+    :param refresh_token: Refresh token given to the user during login process.
+    :param db: app session
+    :return: Current user (DBUser object) if the user is confirmed, raises exception otherwise.
+    """
     credential_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not verify credentials (credentials might have expired)",
