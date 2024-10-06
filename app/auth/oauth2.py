@@ -42,7 +42,6 @@ def create_tokens(data: dict):
     encoded_refresh_token_jwt = jwt.encode(
         to_encode_refresh_token, SECRET_KEY_REFRESH_TOKEN, algorithm=ALGORITHM
     )
-    print(f"REFRESH KEY: {encoded_refresh_token_jwt}")
     return encoded_access_token_jwt, encoded_refresh_token_jwt
 
 

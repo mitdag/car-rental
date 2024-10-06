@@ -39,7 +39,6 @@ class RentalPeriod(BaseModel):
     def validate_dates(cls, values):
         start: datetime = values["start_date"]
         end: datetime = values["end_date"]
-        print(f"Weeks: {(end - start).days / 7}")
         if not start and not end:
             return values
         if (start and not end) or (not start and end):

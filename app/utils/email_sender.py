@@ -3,7 +3,7 @@ from typing import Dict
 
 
 # This function simulates a signup confirmation mail.
-# Lint that is to be sent via email is printed on the console
+# Link that is to be sent via email is printed on the console
 # When the link is clicked it calls confirmation end point and signup process finishes
 def send_signup_confirmation_email(
     receiver_address: str, path: str, params: Dict, expires: int
@@ -29,7 +29,7 @@ def send_signup_confirmation_email(
 
 
 # This function simulates a signup confirmation mail.
-# Lint that is to be sent via email is printed on the console
+# Link that is to be sent via email is printed on the console
 # When the link is clicked it calls confirmation end point and signup process finishes
 def send_forgot_password_email(
     receiver_address: str, path: str, params: Dict, expires: int
