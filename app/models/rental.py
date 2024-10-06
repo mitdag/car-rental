@@ -8,7 +8,7 @@ class DBRental(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     car_id = Column(Integer, ForeignKey("cars.id"))
-    renter_id = Column(Integer, ForeignKey("users.id"))
+    #renter_id = Column(Integer, ForeignKey("users.id"))
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     total_price = Column(Float, nullable=False)
@@ -16,5 +16,11 @@ class DBRental(Base):
 
     # Relationships
     car = relationship("DBCar", back_populates="rentals")
-    renter = relationship("DBUser", back_populates="rentals")
+    # renter = relationship("DBUser", back_populates="rentals")
     reviews = relationship("DBReview", back_populates="rental")
+    # user = relationship(
+    #     "DBUser", foreign_keys=[renter_id], back_populates="renter"
+    # )
+    # user = relationship(
+    #     "DBUser", foreign_keys=[renter_id], back_populates="rental"
+    # )
