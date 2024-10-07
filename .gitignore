@@ -168,3 +168,6 @@ app/static/logs/info.txt
 alembic.ini
 alembic/versions/
 .vscode/settings.json
+logs/info.txt
+car-images/
+profile-pictures/
