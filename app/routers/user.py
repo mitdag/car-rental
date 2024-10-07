@@ -123,7 +123,7 @@ def delete_user(
     return user_service.delete_user(current_user.id, db)
 
 
-@router.get("/{user_id}/cars", response_model=List[CarDisplay], tags=["user", "cars"])
+@router.get("/{user_id}/cars", response_model=List[CarDisplay], tags=["users", "cars"])
 def read_cars_by_user(
     user_id: int = Path(...),
     db: Session = Depends(database.get_db),
