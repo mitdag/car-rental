@@ -5,15 +5,19 @@ from pathlib import Path
 
 
 class Logger:
-    def __init__(self, info_file: str, error_file: str):
+    def __init__(self, info_file: str, error_file: str, warning_file: str):
         self.__info_file__ = info_file
         self.__error_file__ = error_file
+        self.__warning_file__ = warning_file
 
     def error(self, message):
         self.__print_to_file__(inspect.stack()[1], self.__error_file__, message)
 
     def info(self, message):
         self.__print_to_file__(inspect.stack()[1], self.__info_file__, message)
+
+    def warning(self, message):
+        self.__print_to_file__(inspect.stack()[1], self.__warning_file__, message)
 
     def __print_to_file__(self, stack, out_file, message):
         caller_file = Path(stack.filename)
@@ -36,4 +40,6 @@ class Logger:
 current_dir = Path(os.path.dirname(__file__)).as_posix()
 logs_path = current_dir[: current_dir.rindex("/")] + "../../logs/"
 
-logger = Logger(logs_path + "info.txt", logs_path + "error.txt")
+logger = Logger(
+    logs_path + "info.txt", logs_path + "error.txt", logs_path + "warning.txt"
+)
