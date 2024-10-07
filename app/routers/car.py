@@ -6,7 +6,6 @@ It allows users to create, read, update, and delete car records.
 Some actions require user authentication.
 """
 
-from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
@@ -16,6 +15,7 @@ from sqlalchemy.orm import Session
 from app.auth import oauth2
 from app.core.database import get_db
 from app.schemas.car import CarCreate, CarDisplay, CarUpdate
+from app.schemas.rental import RentalPeriod
 from app.schemas.enums import (
     CarEngineType,
     CarSearchSortDirection,
@@ -106,12 +106,7 @@ def search_car(
     renter_lon: float = Query(
         None, ge=-180, le=180, description="Longitude of the user's location"
     ),
-    booking_date_start: datetime = Query(
-        None, description="Start day of the booking. (NOT IMPLEMENTED YET)"
-    ),
-    booking_date_end: datetime = Query(
-        None, description="End day of the booking. (NOT IMPLEMENTED YET)"
-    ),
+    availability_period: RentalPeriod = Depends(),
     engine_type: CarEngineType = Query(None, description="Select an engine type"),
     transmission_type: CarTransmissionType = Query(
         None, description="Select a transmission type"
@@ -136,8 +131,7 @@ def search_car(
         distance_km=distance_km,
         renter_lat=renter_lat,
         renter_lon=renter_lon,
-        booking_date_start=booking_date_start,
-        booking_date_end=booking_date_end,
+        availability_period=availability_period,
         search_in_city=search_in_city,
         engine_type=engine_type,
         transmission_type=transmission_type,

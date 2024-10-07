@@ -31,5 +31,4 @@ def register_math_functions(db_connection, _):
 
 # Bind the function to the connection
 with engine.connect() as connection:
-    # connection.connection.set_trace_callback(print)
     register_math_functions(connection.connection, None)

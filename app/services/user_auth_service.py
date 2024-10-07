@@ -56,9 +56,7 @@ def create_signup_user_from_confirmation_mail(
         .first()
     )
     if not confirmation:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="User does not exist."
-        )
+        return {"result": False, "desc": "Invalid signup"}
 
     confirmation_email = confirmation.email
     confirmation_password = confirmation.password
@@ -116,6 +114,16 @@ def create_forgot_password_validation_entry(email: str, db: Session):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="No such user."
         )
+
+    # delete old reset password request (if any) by this user
+    old_confirmation = (
+        db.query(DBForgotPasswordConfirmation)
+        .filter(email == DBForgotPasswordConfirmation.email)
+        .first()
+    )
+    if old_confirmation:
+        db.delete(old_confirmation)
+        db.commit()
 
     uuid_key = str(uuid.uuid4())
     new_confirmation = DBForgotPasswordConfirmation(

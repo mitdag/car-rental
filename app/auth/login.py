@@ -99,11 +99,13 @@ def login(
     "password is checked if the user really has an account. If so, an change password link "
     "is sent to user's email.",
 )
-def forgot_password(email: str, db: Session = Depends(database.get_db)):
+def forgot_password(
+    request: Request, email: str, db: Session = Depends(database.get_db)
+):
     entry = user_auth_service.create_forgot_password_validation_entry(email, db)
     email_sender.send_forgot_password_email(
         receiver_address=email,
-        path="http://127.0.0.1:8000/login/password-form",
+        path=f"{request.base_url}login/password-form",
         params={"key": entry["key"], "confirm_id": entry["id"]},
         expires=entry["expires_in"],
     )
@@ -117,7 +119,9 @@ def forgot_password(email: str, db: Session = Depends(database.get_db)):
     "/password-form",
     response_class=HTMLResponse,
     summary="Request change password form",
-    description="This endpoint is triggerd when the user clicks the reset password link in the email.",
+    description="This endpoint is triggerd when the user clicks the reset password link in the email. "
+    "If the link in the email is valid then change_password.html is returned. Else a fail "
+    "message is sent by returning request_confirmation.html",
 )
 def reset_password(
     request: Request,
@@ -126,7 +130,6 @@ def reset_password(
     db: Session = Depends(database.get_db),
 ):
     result = user_auth_service.check_change_password_link_validity(confirm_id, key, db)
-    user_auth_service.delete_forgot_password_confirmation(confirm_id, key, db)
     if result["result"]:
         return app.core.config.templates.TemplateResponse(
             "change_password.html",
@@ -136,6 +139,7 @@ def reset_password(
                 "confirm_id": confirm_id,
                 "key": key,
             },
+            status_code=status.HTTP_200_OK,
         )
     return app.core.config.templates.TemplateResponse(
         "request_confirmation.html",
@@ -144,6 +148,7 @@ def reset_password(
             "title": "Change Password Failed",
             "message": result["message"],
         },
+        status_code=status.HTTP_401_UNAUTHORIZED,
     )
 
 
@@ -151,7 +156,8 @@ def reset_password(
     "/password-form",
     response_class=HTMLResponse,
     summary="Send reset password form",
-    description="This endpoint is triggerd when the user clicks the send button on 'reset password' form (browser).",
+    description="This endpoint is triggerd when the user clicks the send button on 'reset password' form (browser). "
+    "Returns request_confirmation.html",
 )
 def reset_password_confirmation(
     request: Request,
@@ -161,15 +167,19 @@ def reset_password_confirmation(
     db: Session = Depends(database.get_db),
 ):
     result = user_auth_service.reset_change_password(password, confirm_id, key, db)
+    user_auth_service.delete_forgot_password_confirmation(confirm_id, key, db)
     if result["result"]:
         title = "Password changed"
         message = result["message"]
+        status_code = status.HTTP_200_OK
     else:
         title = "Password Change Failed"
         message = result["message"]
+        status_code = status.HTTP_401_UNAUTHORIZED
     return app.core.config.templates.TemplateResponse(
         "request_confirmation.html",
         {"request": request, "title": title, "message": message},
+        status_code=status_code,
     )
 
 

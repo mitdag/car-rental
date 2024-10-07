@@ -1,14 +1,15 @@
-from datetime import datetime
 from typing import List, Optional, Dict, Union
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, func, literal_column, select
+from sqlalchemy import and_, or_, func, literal_column, select
 from sqlalchemy.orm import Session
 
 from app.models.address import DBAddress
 from app.models.car import DBCar
+from app.models.rental import DBRental
 from app.models.user import DBUser
 from app.schemas.car import CarBase, CarUpdate
+from app.schemas.rental import RentalPeriod
 from app.schemas.enums import (
     CarSearchSortDirection,
     CarSearchSortType,
@@ -102,8 +103,7 @@ def search_cars(
     distance_km: float,
     renter_lat: float,
     renter_lon: float,
-    booking_date_start: datetime,
-    booking_date_end: datetime,
+    availability_period: RentalPeriod,
     search_in_city: str,
     engine_type: CarEngineType,
     transmission_type: CarTransmissionType,
@@ -120,8 +120,7 @@ def search_cars(
     :param distance_km: Distance from the renter or the city (if city is specified renter location is ignored)
     :param renter_lat: Latitude of the renter in degrees
     :param renter_lon: Longitude of the renter in degrees
-    :param booking_date_start: Start date of the booking
-    :param booking_date_end: End date of the booking
+    :param availability_period: Start and end dates of the rental
     :param search_in_city: Name of the city to search in
     :param engine_type: Type of the car's engine
     :param transmission_type: Type of the car's transmission
@@ -144,7 +143,8 @@ def search_cars(
     """
     if (
         not distance_km
-        and not booking_date_start
+        and availability_period
+        and not availability_period.start_date
         and not search_in_city
         and not engine_type
         and not transmission_type
@@ -163,8 +163,6 @@ def search_cars(
     # if city and distance both exists ignore lat and lon
     if distance_km and search_in_city:
         distance_km = None
-    if not booking_date_end:
-        booking_date_end = datetime.utcnow()
 
     sort_by = None
     if sort:
@@ -207,6 +205,7 @@ def search_cars(
         DBUser.name.label("owner_name"),
         DBUser.last_name.label("owner_last_name"),
         DBAddress.city,
+        DBAddress.postal_code,
         DBAddress.latitude,
         DBAddress.longitude,
         DBCar.id.label("car_id"),
@@ -250,9 +249,32 @@ def search_cars(
         where_clause.append(DBCar.price_per_day <= price_max)
     if make:
         where_clause.append(DBCar.make == make)
-    if booking_date_start:
-        # TODO implement after rental
-        pass
+
+    if availability_period.start_date:
+        where_clause.append(
+            and_(
+                DBUser.id == DBCar.owner_id,
+                DBUser.id == DBAddress.user_id,
+                DBCar.id.notin_(
+                    select(DBRental.car_id).where(
+                        and_(
+                            DBRental.car_id == DBCar.id,
+                            or_(
+                                and_(
+                                    availability_period.start_date
+                                    >= DBRental.start_date,
+                                    availability_period.start_date <= DBRental.end_date,
+                                ),
+                                and_(
+                                    availability_period.end_date >= DBRental.start_date,
+                                    availability_period.end_date <= DBRental.end_date,
+                                ),
+                            ),
+                        )
+                    )
+                ),
+            )
+        )
 
     # Query for counting the matches without applying the limit value. If search is based on distance,
     # the query for distance calculation must also be included in this query (since "distance" is literal value).
@@ -283,6 +305,7 @@ def search_cars(
             .limit(limit)
         )
         .mappings()
+        # .scalars()
         .all()
     )
     result = {

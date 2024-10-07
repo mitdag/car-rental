@@ -61,10 +61,13 @@ def signup_confirmation(
     if result["result"]:
         title = "Signup Completed"
         message = "Thank you for signing up. You can login and enjoy our app now!"
+        status_code = status.HTTP_200_OK
     else:
         title = "Signup Failed"
         message = f"Sorry, something went wrong. ({result['desc']}). Please try again"
+        status_code = status.HTTP_401_UNAUTHORIZED
     return app.core.config.templates.TemplateResponse(
         "request_confirmation.html",
         {"request": request, "title": title, "message": message},
+        status_code=status_code,
     )
