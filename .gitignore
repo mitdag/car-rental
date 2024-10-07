@@ -171,3 +171,7 @@ alembic/versions/
 logs/info.txt
 car-images/
 profile-pictures/
+
+test.db
+insert_data_test_db.py
+reset_db.py

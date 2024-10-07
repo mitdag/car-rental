@@ -4,6 +4,7 @@ from app.core.database import Base
 from datetime import datetime
 
 
+
 class DBReview(Base):
     __tablename__ = "reviews"
 
@@ -15,11 +16,11 @@ class DBReview(Base):
     comment = Column(String)
     review_date = Column(DateTime, default=datetime.utcnow)
 
-    # Relationships
+    #Relationships
     rental = relationship("DBRental", back_populates="reviews")
     reviewer = relationship(
         "DBUser", foreign_keys=[reviewer_id], back_populates="reviews_written"
     )
     reviewee = relationship(
-        "DBUser", foreign_keys=[reviewee_id], back_populates="reviews_received"
+    "DBUser", foreign_keys=[reviewee_id], back_populates="reviews_received"
     )

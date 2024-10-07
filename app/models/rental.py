@@ -18,3 +18,9 @@ class DBRental(Base):
     car = relationship("DBCar", back_populates="rentals")
     renter = relationship("DBUser", back_populates="rentals")
     reviews = relationship("DBReview", back_populates="rental")
+    # user = relationship(
+    #     "DBUser", foreign_keys=[renter_id], back_populates="renter"
+    # )
+    # user = relationship(
+    #     "DBUser", foreign_keys=[renter_id], back_populates="rental"
+    # )

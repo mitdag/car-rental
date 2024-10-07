@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import oauth2  # Assuming a valid OAuth2 authentication set up
 from app.core.database import get_db
-from app.schemas.review import ReviewBase, ReviewDisplay
+from app.schemas.review import ReviewBase, ReviewDisplay, ReviewCreate
 from app.services import review
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
@@ -12,11 +12,8 @@ router = APIRouter(prefix="/reviews", tags=["reviews"])
 
 @router.post("/", response_model=ReviewDisplay)
 def create_review(
-    request: ReviewBase,
-    db: Session = Depends(get_db),
-    current_user=Depends(
-        oauth2.get_current_user
-    ),  # Uncomment this line to enable authentication
+    request: ReviewCreate,
+    db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user),  # Uncomment this line to enable authentication
 ):
     """Create a new review."""
     return review.create_review(db, request)
@@ -41,25 +38,23 @@ def read_review(review_id: int, db: Session = Depends(get_db)):
 def update_review(
     review_id: int,
     request: ReviewBase,
-    db: Session = Depends(get_db),
-    current_user=Depends(
-        oauth2.get_current_user
-    ),  # Uncomment this line to enable authentication
+    db: Session = Depends(get_db),  current_user=Depends(oauth2.get_current_user),  # Uncomment this line to enable authentication
 ):
     """Update a specific review by ID."""
-    db_review = review.get_review(db, review_id)
+    db_review = review.get_review_by_id(db, review_id)
     if db_review is None:
         raise HTTPException(status_code=404, detail="Review not found")
+    # Validation1: Check if the reviewer is allowed to update the review
+    #if db_review.reviewer_id != current_user.id:
+    #    raise HTTPException(status_code=403, detail="Not authorized to update this review")
+    
     return review.update_review(db, review_id, request)
 
 
 @router.delete("/{review_id}")
 def delete_review(
     review_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(
-        oauth2.get_current_user
-    ),  # Uncomment this line to enable authentication
+    db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user),  # Uncomment this line to enable authentication
 ):
     """Delete a specific review by ID."""
     db_review = review.delete_review(db, review_id)
