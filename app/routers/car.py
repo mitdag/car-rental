@@ -274,6 +274,28 @@ def upload_car_picture(
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
+    """
+    Uploads a picture for a specified car.
+
+    This endpoint allows users to upload an image associated with a car identified by
+    its ID. Only users with admin privileges or the car owner can upload a picture.
+
+    Args:
+        car_id (int): The ID of the car for which the picture is being uploaded.
+        picture (UploadFile): The image file to be uploaded. Supported formats include
+                              JPEG, PNG, BMP, and WEBP.
+        db (Session): Database session dependency.
+        current_user: The user attempting to upload the picture. Retrieved from the
+                      authentication system.
+
+    Raises:
+        HTTPException:
+            - 400: If no picture is provided.
+            - 403: If the user is not authorized to upload a picture for the specified car.
+
+    Returns:
+        Response: The response from the car picture upload process.
+    """
     if not picture:
         return HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Provide a picture"
