@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.schemas.enums import CarEngineType, CarTransmissionType
+from app.schemas.enums import CarEngineType, CarMake, CarTransmissionType
 from app.schemas.user import UserDisplay
 
 
@@ -38,7 +38,7 @@ class CarBase(BaseModel):
 
 
 class CarCreate(BaseModel):
-    make: str
+    make: CarMake
     model: str
     year: int = Field(default=datetime.utcnow().year)
     transmission_type: CarTransmissionType
@@ -56,7 +56,7 @@ class CarCreate(BaseModel):
 
 
 class CarUpdate(BaseModel):
-    make: Optional[str] = None
+    make: Optional[CarMake] = None
     model: Optional[str] = None
     year: Optional[int] = Field(default=datetime.utcnow().year)
     transmission_type: Optional[CarTransmissionType] = None
