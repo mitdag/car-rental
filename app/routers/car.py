@@ -26,6 +26,7 @@ from app.core.database import get_db
 from app.schemas.car import CarCreate, CarDisplay, CarUpdate
 from app.schemas.enums import (
     CarEngineType,
+    CarMake,
     CarSearchSortDirection,
     CarSearchSortType,
     CarTransmissionType,
@@ -287,3 +288,27 @@ def upload_car_picture(
         )
 
     return car.upload_car_picture(picture, current_user.id)
+
+
+@router.get("/car-makes/", response_model=list)
+def get_car_makes():
+    """
+    Retrieve a list of available car makes.
+
+    This endpoint returns a list of car makes defined in the CarMake enum.
+    Each car make is represented as a string value corresponding to its name.
+
+    Responses:
+        - 200 OK: A list of car makes available in the system.
+
+    Example Response:
+        [
+            "Acura",
+            "Alfa Romeo",
+            "Aston Martin",
+            "Audi",
+            "Bentley",
+            ...
+        ]
+    """
+    return [make.value for make in CarMake]
