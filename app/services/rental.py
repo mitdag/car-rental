@@ -1,3 +1,4 @@
+from fastapi import HTTPException, status
 from app.services.car import get_car
 from sqlalchemy.orm import Session
 
@@ -9,6 +10,9 @@ from app.models.rental import DBRental
 
 def create_rental(db: Session, rental: RentalBase, renter_id: int):
     car= get_car(db, rental.car_id)
+    if car.owner_id==renter_id:
+        raise HTTPException(status_code=404, detail="You are the owner of the car!")
+
     db_rental = DBRental(
         car_id=rental.car_id,
         renter_id=renter_id,
