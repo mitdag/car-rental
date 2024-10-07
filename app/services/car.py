@@ -1,7 +1,11 @@
-from typing import List, Optional, Dict, Union
+import shutil
+import uuid
+from pathlib import Path
+from typing import Dict, List, Optional, Union
 
-from fastapi import HTTPException, status
-from sqlalchemy import and_, or_, func, literal_column, select
+from fastapi import HTTPException, UploadFile, status
+from PIL import Image
+from sqlalchemy import and_, func, literal_column, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.address import DBAddress
@@ -9,13 +13,14 @@ from app.models.car import DBCar
 from app.models.rental import DBRental
 from app.models.user import DBUser
 from app.schemas.car import CarBase, CarUpdate
-from app.schemas.rental import RentalPeriod
 from app.schemas.enums import (
+    CarEngineType,
     CarSearchSortDirection,
     CarSearchSortType,
     CarTransmissionType,
-    CarEngineType,
 )
+from app.schemas.rental import RentalPeriod
+from app.utils.constants import CAR_IMAGES_PATH
 from app.utils.logger import logger
 
 # Database Operations
@@ -316,3 +321,176 @@ def search_cars(
         "cars": cars,
     }
     return result
+
+
+ALLOWED_TYPES = {"image/jpeg", "image/png", "image/bmp", "image/webp"}
+
+
+def upload_car_picture(picture: UploadFile, car_id: int) -> dict:
+    """
+    Upload and save a picture for a specific car.
+
+    Args:
+        picture (UploadFile): The uploaded picture file.
+        car_id (int): The ID of the car to associate the picture with.
+
+    Returns:
+        dict: A dictionary containing the saved file's name and content type.
+
+    Raises:
+        HTTPException: If the uploaded file type is not allowed.
+    """
+    pictures_path = get_car_pictures_path(car_id)
+
+    # Validate file type
+    if picture.content_type not in ALLOWED_TYPES:
+        allowed_str = ", ".join(t.split("/")[-1].upper() for t in ALLOWED_TYPES)
+        logger.error(f"Invalid file type for car_id {car_id}: {picture.content_type}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid file type. Only {allowed_str} types are allowed.",
+        )
+
+    # Generate a unique filename and save the image
+    unique_filename = f"{uuid.uuid4()}{Path(picture.filename).suffix}"
+    new_file_path = pictures_path / unique_filename
+
+    try:
+        with new_file_path.open("wb") as buffer:
+            shutil.copyfileobj(picture.file, buffer)
+        logger.info(f"Picture uploaded for car_id {car_id}: {unique_filename}")
+    except Exception as e:
+        logger.error(f"Error saving picture for car_id {car_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+
+    # Optimizing the image
+    optimize_image(new_file_path)
+
+    return {
+        "file-name": new_file_path.name,
+        "file-type": picture.content_type,
+    }
+
+
+def get_car_pictures_path(car_id: int) -> Path:
+    """
+    Get the path to the directory where pictures for a specific car are stored.
+
+    Args:
+        car_id (int): The ID of the car.
+
+    Returns:
+        Path: The path to the car's picture directory.
+    """
+    current_dir = Path(__file__).resolve().parent
+    pictures_path = current_dir.parent / "static" / CAR_IMAGES_PATH / f"car_{car_id:06}"
+
+    # Ensuring the directory exists
+    try:
+        pictures_path.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Created directory for car_id {car_id}: {pictures_path}")
+    except OSError as e:
+        logger.error(f"Error creating directory for car_id {car_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating directory: {e}",
+        )
+
+    return pictures_path
+
+
+def get_car_pictures(car_id: int) -> List[str]:
+    """
+    Get a list of all picture filenames for a specific car.
+
+    Args:
+        car_id (int): The ID of the car.
+
+    Returns:
+        List[str]: A list of filenames of pictures associated with the car.
+    """
+    pictures_path = get_car_pictures_path(car_id)
+
+    if not pictures_path.exists():
+        logger.info(f"No pictures found for car_id {car_id}")
+        return []
+
+    # Return file names that are regular files
+    logger.info(f"Listing pictures for car_id {car_id}")
+    return [f.name for f in pictures_path.iterdir() if f.is_file()]
+
+
+def delete_car_picture(car_id: int, filename: str) -> bool:
+    """
+    Delete a specific picture for a car.
+
+    Args:
+        car_id (int): The ID of the car.
+        filename (str): The name of the file to delete.
+
+    Returns:
+        bool: True if the file was successfully deleted, False otherwise.
+    """
+    pictures_path = get_car_pictures_path(car_id)
+    file_path = pictures_path / filename
+
+    try:
+        if file_path.exists():
+            file_path.unlink()
+            logger.info(f"Deleted picture for car_id {car_id}: {filename}")
+            return True
+        logger.warning(f"File not found for car_id {car_id}: {filename}")
+    except Exception as e:
+        logger.error(
+            f"Error deleting picture for car_id {car_id}, file {filename}: {str(e)}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting file: {e}",
+        )
+
+    return False
+
+
+def optimize_image(file_path: Path, max_size: int = 1024, quality: int = 85) -> None:
+    """
+    Optimize an image by resizing and compressing it.
+
+    Args:
+        file_path (Path): The path to the image file.
+        max_size (int, optional): The maximum width or height of the image. Defaults to 1024.
+        quality (int, optional): The quality of the compressed image (0-100). Defaults to 85.
+    """
+    try:
+        with Image.open(file_path) as img:
+            img.thumbnail((max_size, max_size))
+            img.save(file_path, optimize=True, quality=quality)
+        logger.info(f"Optimized image at {file_path}")
+    except Exception as e:
+        logger.error(f"Error optimizing image at {file_path}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error optimizing image: {e}",
+        )
+
+
+def delete_all_car_pictures(car_id: int) -> None:
+    """
+    Delete all pictures associated with a specific car.
+
+    Args:
+        car_id (int): The ID of the car.
+    """
+    pictures_path = get_car_pictures_path(car_id)
+
+    try:
+        shutil.rmtree(pictures_path, ignore_errors=True)
+        logger.info(f"Deleted all pictures for car_id {car_id}")
+    except Exception as e:
+        logger.error(f"Error deleting all pictures for car_id {car_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting all pictures: {e}",
+        )

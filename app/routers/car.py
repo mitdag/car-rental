@@ -8,14 +8,22 @@ Some actions require user authentication.
 
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    Path,
+    Query,
+    UploadFile,
+    status,
+)
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2
 from app.core.database import get_db
 from app.schemas.car import CarCreate, CarDisplay, CarUpdate
-from app.schemas.rental import RentalPeriod
 from app.schemas.enums import (
     CarEngineType,
     CarSearchSortDirection,
@@ -23,6 +31,7 @@ from app.schemas.enums import (
     CarTransmissionType,
     UserType,
 )
+from app.schemas.rental import RentalPeriod
 from app.services import car
 from app.utils import constants
 
@@ -251,3 +260,30 @@ def delete_car(
         )
 
     return car.delete_car(db, car_id)
+
+
+@router.post("/{car_id}/car-picture")
+def upload_car_picture(
+    car_id: int = Path(...),
+    picture: UploadFile = File(
+        ...,
+        description="Upload an image (JPEG, PNG, BMP, WEBP)",
+        openapi_extra={"examples": {"image": {"content": {"image/*": {}}}}},
+    ),
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    if not picture:
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Provide a picture"
+        )
+
+    db_car = car.get_car(db, car_id)
+
+    if current_user.user_type != UserType.ADMIN and db_car.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to update this car",
+        )
+
+    return car.upload_car_picture(picture, current_user.id)
