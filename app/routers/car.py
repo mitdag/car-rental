@@ -156,6 +156,11 @@ def search_car(
     )
 
 
+# @router.get("/test")
+# def test(db=Depends(get_db)):
+#     return test_rating(db)
+
+
 @router.get(
     "/{car_id}",
     response_model=CarDisplay,

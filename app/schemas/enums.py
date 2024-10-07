@@ -96,3 +96,17 @@ class CarMake(str, Enum):
     TOYOTA = "Toyota"
     VOLKSWAGEN = "Volkswagen"
     VOLVO = "Volvo"
+
+
+class RentalStatus(str, Enum):
+    # When the start time of the rental is in the future
+    RESERVED = "RESERVED"
+
+    # The car is in renter's usage (in rental period)
+    BOOKED = "BOOKED"
+
+    # Car is returned by the renter (end of rental period)
+    RETURNED = "RETURNED"
+
+    # Reservation is cancelled by the renter or the owner
+    CANCELLED = "CANCELLED"

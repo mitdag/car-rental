@@ -3,6 +3,8 @@ import uuid
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
+from fastapi import HTTPException, status
+from sqlalchemy import and_, or_, func, literal_column, select, case
 from fastapi import HTTPException, UploadFile, status
 from PIL import Image
 from sqlalchemy import and_, func, literal_column, or_, select
@@ -11,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.models.address import DBAddress
 from app.models.car import DBCar
 from app.models.rental import DBRental
+from app.models.review import DBReview
 from app.models.user import DBUser
 from app.schemas.car import CarBase, CarUpdate
 from app.schemas.enums import (
@@ -22,6 +25,7 @@ from app.schemas.enums import (
 from app.schemas.rental import RentalPeriod
 from app.utils.constants import CAR_IMAGES_PATH
 from app.utils.logger import logger
+
 
 # Database Operations
 
@@ -146,20 +150,20 @@ def search_cars(
             "cars": List of matching DBCar objects
         }
     """
-    if (
-        not distance_km
-        and availability_period
-        and not availability_period.start_date
-        and not search_in_city
-        and not engine_type
-        and not transmission_type
-        and not price_min
-        and not price_max
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Specify at least one search parameter",
-        )
+    # if (
+    #     not distance_km
+    #     and availability_period
+    #     and not availability_period.start_date
+    #     and not search_in_city
+    #     and not engine_type
+    #     and not transmission_type
+    #     and not price_min
+    #     and not price_max
+    # ):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #         detail="Specify at least one search parameter",
+    #     )
     if distance_km and not search_in_city and (not renter_lat or not renter_lon):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -310,7 +314,6 @@ def search_cars(
             .limit(limit)
         )
         .mappings()
-        # .scalars()
         .all()
     )
     result = {
@@ -320,6 +323,39 @@ def search_cars(
         "next_offset": (skip + limit) if len(cars) == limit else None,
         "cars": cars,
     }
+    return result
+
+
+def test_rating(db: Session):
+    sub_query = (
+        select(
+            DBReview.reviewee_id,
+            func.sum(DBReview.rating).label("total_rating"),
+            func.count(DBReview.reviewee_id).label("total_count"),
+        )
+        .group_by(DBReview.reviewee_id)
+        .alias("sub_query")
+    )
+    result = (
+        db.execute(
+            select(
+                DBUser.id,
+                DBUser.name,
+                DBUser.last_name,
+                case(
+                    (sub_query.c.total_count == 0, "None"),
+                    else_=(sub_query.c.total_rating / sub_query.c.total_count),
+                ).label("rating"),
+            )
+            .where(
+                DBUser.id < 20,
+            )
+            .outerjoin(sub_query, sub_query.c.reviewee_id == DBUser.id)
+        )
+        .mappings()
+        .all()
+    )
+
     return result
 
 
