@@ -1,18 +1,27 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from random import choice, randint, random
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import insert
 from sqlalchemy.orm import Session
 
 from app.core import database
 from app.models.address import DBAddress
 from app.models.car import DBCar
+from app.models.rental import DBRental
+from app.models.review import DBReview
 from app.models.user import DBUser
-from app.schemas.enums import CarEngineType, CarTransmissionType, LoginMethod, UserType
+from app.schemas.enums import (
+    CarEngineType,
+    CarTransmissionType,
+    LoginMethod,
+    UserType,
+    RentalStatus,
+)
 from app.utils.hash import Hash
+from app.services import car as car_service
 
 email_providers = ["google.com", "hotmail.com", "yahoo.com"]
 login_methods = [
@@ -34,15 +43,27 @@ def read_file(file_name):
     return buf
 
 
-@router.get("/create-test-all")
+# @router.get("/create-test-all")
 def create_test_all(db: Session = Depends(database.get_db)):
     create_test_users(db)
     create_test_cars(db)
     create_test_addresses(db)
+    create_rentals_and_reviews(db)
 
 
 # @router.get("/create-test-users")
 def create_test_users(db: Session = Depends(database.get_db)):
+    try:
+        db.query(DBUser).delete()
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Could not delete entries in users table ({exc}) ",
+        )
+
     current_dir = Path(os.path.dirname(__file__)).as_posix()
     users = []
     with open(f"{current_dir}/txt_files/names.txt", "r") as names_file:
@@ -78,6 +99,17 @@ def create_test_users(db: Session = Depends(database.get_db)):
 
 # @router.get("/create-test-addresses")
 def create_test_addresses(db: Session = Depends(database.get_db)):
+    try:
+        db.query(DBAddress).delete()
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Could not delete entries in address table ({exc}) ",
+        )
+
     states = ["DR", "FL", "FR", "GE", "GR", "LI", "NB", "NH", "OV", "ZH", "UT", "ZE"]
 
     streets = read_file("streets.txt")
@@ -118,6 +150,16 @@ def create_test_addresses(db: Session = Depends(database.get_db)):
 
 # @router.get("/create-cars")
 def create_test_cars(db: Session = Depends(database.get_db)):
+    try:
+        db.query(DBCar).delete()
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Could not delete entries in cars table ({exc}) ",
+        )
     cars = []
     makes = read_file("car_make.txt")
     models = read_file("car_model.txt")
@@ -148,3 +190,109 @@ def create_test_cars(db: Session = Depends(database.get_db)):
         cars.clear()
 
     return "create_test_cars"
+
+
+@router.get("/test-create-rentals")
+def create_rentals_and_reviews(db: Session = Depends(database.get_db)):
+    try:
+        db.query(DBRental).delete()
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Could not delete entries in rentals table ({exc}) ",
+        )
+
+    try:
+        db.query(DBReview).delete()
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Could not delete entries in reviews table ({exc}) ",
+        )
+
+    owners_and_cars = (
+        db.query(DBUser.id, DBCar.id).filter(DBUser.id == DBCar.owner_id).all()
+    )
+
+    rental_id = 1
+
+    rentals = []
+    reviews = []
+    for user, car in owners_and_cars:
+        start_date: datetime = datetime.now() - timedelta(days=90)
+        for _ in range(1, randint(50, 200)):
+            renter = randint(1, 5000)
+            while renter == user:
+                renter = randint(1, 5000)
+            car_in_db: DBCar = car_service.get_car(db, car)
+            start_d = start_date + timedelta(days=randint(1, 3))
+            end_d = start_d + timedelta(days=randint(1, 5))
+            rental = {
+                "id": rental_id,  # we give id manually because we use it also with the review
+                "car_id": car,
+                "renter_id": renter,
+                "start_date": start_d,
+                "end_date": end_d,
+                "total_price": car_in_db.price_per_day * (end_d - start_d).days,
+            }
+            now = datetime.utcnow()
+            if now > rental["end_date"]:
+                rental["status"] = RentalStatus.RETURNED.name
+            elif rental["start_date"] < datetime.utcnow() < rental["end_date"]:
+                rental["status"] = RentalStatus.BOOKED.name
+            elif now < rental["start_date"]:
+                rental["status"] = RentalStatus.RESERVED.name
+            rentals.append(rental)
+
+            start_date = rental["end_date"]
+
+            reviews.append(
+                {
+                    "rental_id": rental_id,
+                    "reviewer_id": renter,
+                    "reviewee_id": user,
+                    "rating": randint(1, 5),
+                    "comment": "",
+                    "review_date": rental["end_date"] + timedelta(days=1),
+                }
+            )
+
+            if randint(1, 4) == 4:
+                reviews.append(
+                    {
+                        "rental_id": rental_id,
+                        "reviewer_id": user,
+                        "reviewee_id": renter,
+                        "rating": randint(1, 5),
+                        "comment": "",
+                        "review_date": rental["end_date"] + timedelta(days=2),
+                    }
+                )
+
+            rental_id += 1
+
+            if len(rentals) >= 100:
+                db.execute(insert(DBRental), rentals)
+                db.commit()
+                rentals.clear()
+            if len(reviews) >= 100:
+                db.execute(insert(DBReview), reviews)
+                db.commit()
+                reviews.clear()
+
+    if len(rentals) > 0:
+        db.execute(insert(DBRental), rentals)
+        db.commit()
+        rentals.clear()
+    if len(reviews) > 0:
+        db.execute(insert(DBReview), reviews)
+        db.commit()
+        reviews.clear()
+
+    return "done"

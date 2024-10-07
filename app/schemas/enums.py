@@ -44,3 +44,17 @@ class CarSearchSortType(str, Enum):
 class CarSearchSortDirection(str, Enum):
     ASC = "ASC"
     DESC = "DESC"
+
+
+class RentalStatus(str, Enum):
+    # When the start time of the rental is in the future
+    RESERVED = "RESERVED"
+
+    # The car is in renter's usage (in rental period)
+    BOOKED = "BOOKED"
+
+    # Car is returned by the renter (end of rental period)
+    RETURNED = "RETURNED"
+
+    # Reservation is cancelled by the renter or the owner
+    CANCELLED = "CANCELLED"
