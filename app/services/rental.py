@@ -1,3 +1,4 @@
+from app.services.car import get_car
 from sqlalchemy.orm import Session
 
 from app.schemas.rental import RentalBase
@@ -5,13 +6,15 @@ from app.models.rental import DBRental
 
 
 # Create a new rental
+
 def create_rental(db: Session, rental: RentalBase, renter_id: int):
+    car= get_car(db, rental.car_id)
     db_rental = DBRental(
         car_id=rental.car_id,
         renter_id=renter_id,
         start_date=rental.start_date,
         end_date=rental.end_date,
-        total_price=rental.total_price,
+        total_price=(rental.start_date - rental.end_date).days*car.price_per_day,
         status=rental.status,
     )
     db.add(db_rental)

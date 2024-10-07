@@ -1,5 +1,6 @@
 from typing import List
 from app.auth import oauth2
+from app.services.rental import create_rental
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.schemas.rental import RentalBase, RentalDisplay
@@ -19,11 +20,11 @@ router = APIRouter(prefix="/rentals", tags=["rentals"])
 # Create a new rental
 @router.post("/", response_model=RentalDisplay)
 def create_new_rental(
-    rental: RentalBase, renter_id: int, db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user),
+    rental: RentalBase, db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user),
 ):
     print(rental.dict())  # Check what fields are actually being received
-    renter_id = current_user.id  # Extract renter_id from current_user
-    return create_rental(db, rental, renter_id)
+    
+    return create_rental(db, rental, current_user.id)
 
 
 # Get a rental by ID
