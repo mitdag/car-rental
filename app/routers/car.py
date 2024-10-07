@@ -263,7 +263,7 @@ def delete_car(
     return car.delete_car(db, car_id)
 
 
-@router.post("/{car_id}/car-picture")
+@router.post("/{car_id}/car-pictures")
 def upload_car_picture(
     car_id: int = Path(...),
     picture: UploadFile = File(
@@ -309,7 +309,7 @@ def upload_car_picture(
             detail="You are not authorized to update this car",
         )
 
-    return car.upload_car_picture(picture, current_user.id)
+    return car.upload_car_picture(picture, db_car.id)
 
 
 @router.get("/car-makes/", response_model=list)
