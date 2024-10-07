@@ -175,3 +175,4 @@ profile-pictures/
 test.db
 insert_data_test_db.py
 reset_db.py
+logs/warning.txt
