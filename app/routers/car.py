@@ -312,6 +312,93 @@ def upload_car_picture(
     return car.upload_car_picture(picture, db_car.id)
 
 
+@router.get("/{car_id}/car-pictures", response_model=List[str])
+def get_car_pictures(
+    car_id: int = Path(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Get a list of all picture filenames for a specific car.
+
+    Args:
+        car_id (int): The ID of the car.
+        db (Session): Database session dependency.
+    Returns:
+        List[str]: A list of filenames of pictures associated with the car.
+    """
+
+    # Raise error if car doesnt exist
+    car.get_car(db, car_id)
+
+    return car.get_car_pictures(car_id)
+
+
+@router.delete("/{car_id}/car-pictures/{filename}")
+def delete_car_picture(
+    car_id: int = Path(...),
+    filename: str = Path(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    """
+    Delete a specific picture for a car.
+
+    Args:
+        car_id (int): The ID of the car.
+        filename (str): The name of the file to delete.
+        db (Session): Database session dependency.
+        current_user: The authenticated user.
+
+    Returns:
+        dict: A message indicating whether the deletion was successful.
+    """
+    db_car = car.get_car(db, car_id)
+
+    if current_user.user_type != UserType.ADMIN and db_car.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to delete this car's pictures",
+        )
+
+    success = car.delete_car_picture(car_id, filename)
+    if success:
+        return {"message": f"Picture {filename} deleted successfully"}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Picture {filename} not found for car_id {car_id}",
+        )
+
+
+@router.delete("/{car_id}/car-pictures")
+def delete_all_car_pictures(
+    car_id: int = Path(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    """
+    Delete all pictures associated with a specific car.
+
+    Args:
+        car_id (int): The ID of the car.
+        db (Session): Database session dependency.
+        current_user: The authenticated user.
+
+    Returns:
+        dict: A message indicating that all pictures were deleted.
+    """
+    db_car = car.get_car(db, car_id)
+
+    if current_user.user_type != UserType.ADMIN and db_car.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to delete this car's pictures",
+        )
+
+    car.delete_all_car_pictures(car_id)
+    return {"message": f"All pictures for car_id {car_id} deleted successfully"}
+
+
 @router.get("/car-makes/", response_model=list)
 def get_car_makes():
     """
