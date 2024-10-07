@@ -24,6 +24,7 @@ from app.schemas.enums import (
     UserType,
 )
 from app.services import car
+from app.services.car import test_rating
 from app.utils import constants
 
 router = APIRouter(prefix="/cars", tags=["cars"])
@@ -144,6 +145,11 @@ def search_car(
         limit=min(limit, constants.QUERY_LIMIT_MAX),
         db=db,
     )
+
+
+@router.get("/test")
+def test(db=Depends(get_db)):
+    return test_rating(db)
 
 
 @router.get(
