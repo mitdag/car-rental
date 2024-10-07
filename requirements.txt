@@ -9,3 +9,4 @@ python-jose
 pre-commit
 alembic
 sqlalchemy-utils
+Pillow
