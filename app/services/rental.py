@@ -121,10 +121,10 @@ def update_rental(
 
     if not is_car_available_for_update(
         db_rental.car_id,
-        db_rental.renter_id,
         rental_period.start_date,
         rental_period.end_date,
         db,
+        db_rental.renter_id,
     ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -156,9 +156,14 @@ def delete_rental(db: Session, rental_id: int):
 
 
 # new code
-def is_car_available(car_id: int, start_date: datetime, end_date: datetime, db):
+def is_car_available(
+    car_id: int, start_date: datetime, end_date: datetime, db, renter_id: int = None
+):
     rental_t1 = aliased(DBRental)
     rental_t2 = aliased(DBRental)
+    q_filter = [rental_t2.car_id == rental_t1.car_id]
+    if renter_id:
+        q_filter.append(rental_t2.renter_id != renter_id)
     result = db.execute(
         select(rental_t1.car_id).where(
             and_(
@@ -166,7 +171,8 @@ def is_car_available(car_id: int, start_date: datetime, end_date: datetime, db):
                 rental_t1.car_id.notin_(
                     select(rental_t2.car_id).where(
                         and_(
-                            rental_t2.car_id == rental_t1.car_id,
+                            # rental_t2.car_id == rental_t1.car_id,
+                            *q_filter,
                             or_(
                                 and_(
                                     start_date >= rental_t2.start_date,
@@ -187,33 +193,6 @@ def is_car_available(car_id: int, start_date: datetime, end_date: datetime, db):
 
 
 def is_car_available_for_update(
-    car_id: int, renter_id: int, start_date: datetime, end_date: datetime, db
+    car_id: int, start_date: datetime, end_date: datetime, db, renter_id: int
 ):
-    rental_t1 = aliased(DBRental)
-    rental_t2 = aliased(DBRental)
-    result = db.execute(
-        select(rental_t1.car_id).where(
-            and_(
-                rental_t1.car_id == car_id,
-                rental_t1.car_id.notin_(
-                    select(rental_t2.car_id).where(
-                        and_(
-                            rental_t2.car_id == rental_t1.car_id,
-                            rental_t2.renter_id != renter_id,
-                            or_(
-                                and_(
-                                    start_date >= rental_t2.start_date,
-                                    start_date <= rental_t2.end_date,
-                                ),
-                                and_(
-                                    end_date >= rental_t2.start_date,
-                                    end_date <= rental_t2.end_date,
-                                ),
-                            ),
-                        )
-                    )
-                ),
-            )
-        )
-    ).all()
-    return len(result) != 0
+    return is_car_available(car_id, start_date, end_date, db, renter_id)

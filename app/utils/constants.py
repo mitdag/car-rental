@@ -22,8 +22,8 @@ DEFAULT_PROFILE_PICTURE_FILE = "egg_head.png"
 # Path to the car pictures in mounted "static" directory (mounted in main.py)
 CAR_IMAGES_PATH = "images/car-images"
 
-# A car ce be reserved up to this weeks starting form today.
-LATEST_START_DATE_OF_RENTAL_IN_WEEKS = 6 * 4
+# A car ce be reserved up to this week's starting form today.
+LATEST_START_DATE_OF_RENTAL_IN_WEEKS = 60 * 4
 
 # Maximum rental period in weeks a car can be rented.
 MAX_RENTAL_PERIOD_IN_WEEKS = 8
