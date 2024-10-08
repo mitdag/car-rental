@@ -3,10 +3,9 @@ import uuid
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from fastapi import HTTPException, status
-from sqlalchemy import and_, or_, func, literal_column, select, case
-from fastapi import UploadFile
+from fastapi import HTTPException, UploadFile, status
 from PIL import Image
+from sqlalchemy import and_, case, func, literal_column, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.address import DBAddress
@@ -24,7 +23,6 @@ from app.schemas.enums import (
 from app.schemas.rental import RentalPeriod
 from app.utils.constants import CAR_IMAGES_PATH
 from app.utils.logger import logger
-
 
 # Database Operations
 
@@ -44,8 +42,9 @@ def get_car(db: Session, car_id: int) -> Optional[DBCar]:
     return car
 
 
-def get_cars(db: Session, skip: int = 0, limit: int = 100) -> List[DBCar]:
-    return db.query(DBCar).offset(skip).limit(limit).all()
+def get_cars(db: Session) -> List[DBCar]:
+    # return db.query(DBCar).offset(skip).limit(limit).all()
+    return db.query(DBCar).all()
 
 
 def update_car(db: Session, car_id: int, car_update: CarUpdate) -> Optional[DBCar]:

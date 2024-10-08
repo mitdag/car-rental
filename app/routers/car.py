@@ -64,42 +64,32 @@ def create_car(
     return car.create_car(db, request, current_user.id)
 
 
-@router.get(
-    "/",
-    response_model=List[CarDisplay],
-    summary="List all cars",
-    description="Retrieve a paginated list of all cars from the database.",
-)
-def list_cars(
-    db: Session = Depends(get_db),
-    skip: int = Query(
-        0, ge=0, description="Number of records to skip (used for pagination)"
-    ),
-    limit: int = Query(
-        constants.QUERY_LIMIT_DEFAULT,
-        ge=1,
-        le=constants.QUERY_LIMIT_MAX,
-        description="Maximum number of records to return",
-    ),
-) -> List[CarDisplay]:
-    """
-    Retrieve all car entries from the database with pagination options.
+# Pagination example
+# @router.get(
+#     "/",
+#     response_model=Page[CarDisplay],
+#     summary="List all cars",
+#     description="Retrieve a paginated list of all cars from the database.",
+# )
+# def list_cars(db: Session = Depends(get_db)) -> Page[CarDisplay]:
+#     """
+#     Retrieve all car entries from the database with pagination options.
 
-    Args:
-        db (Session): Database session dependency.
-        skip (int): Number of records to skip (used for pagination).
-        limit (int): Maximum number of records to return (used for pagination).
+#     Args:
+#         db (Session): Database session dependency.
+#         skip (int): Number of records to skip (used for pagination).
+#         limit (int): Maximum number of records to return (used for pagination).
 
-    Returns:
-        List[CarBase]: A list of cars in the database based on pagination.
-    """
-    return car.get_cars(db, skip=skip, limit=limit)
+#     Returns:
+#         List[CarBase]: A list of cars in the database based on pagination.
+#     """
+#     return paginate(car.get_cars(db))
 
 
 @router.get(
-    path="/search",
-    summary="Search cars",
-    description="Filter car search based on distance, city, booking periods, engine type"
+    path="/",
+    summary="Search and list cars",
+    description="Search and retrieve a paginated list of cars based on various filters. Filter car search based on distance, city, booking periods, engine type"
     " transmission type, price and make. Sort result accordingly.",
 )
 def search_car(

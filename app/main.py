@@ -1,16 +1,15 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi_pagination import add_pagination
 
-from app.auth import login, signup, logout
+from app.auth import login, logout, signup
 from app.core.database import Base, engine
-
-from app.routers import car, user, favorites, review, rental, admin_user_tools
-
+from app.routers import admin_user_tools, car, favorites, rental, review, user
 from app.tests.test_sets import create_test_db
 
-
 app = FastAPI()
+add_pagination(app)
 
 app.mount(
     "/static",

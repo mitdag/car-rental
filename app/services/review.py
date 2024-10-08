@@ -1,14 +1,16 @@
-from sqlalchemy.orm import Session
-from app.models.review import DBReview
-from app.schemas.review import ReviewBase
 from datetime import datetime
+
+from sqlalchemy.orm import Session
+
+from app.models.review import DBReview
+from app.schemas.review import ReviewBase, ReviewCreate
 
 
 # Create a new review
-def create_review(db: Session, review: ReviewBase):
+def create_review(db: Session, review: ReviewCreate, reviewer_id: int) -> DBReview:
     db_review = DBReview(
         rental_id=review.rental_id,
-        reviewer_id=review.reviewer_id,
+        reviewer_id=reviewer_id,
         reviewee_id=review.reviewee_id,
         rating=review.rating,
         comment=review.comment,

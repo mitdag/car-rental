@@ -10,3 +10,4 @@ pre-commit
 alembic
 sqlalchemy-utils
 Pillow
+fastapi-pagination
