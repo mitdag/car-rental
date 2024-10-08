@@ -209,10 +209,25 @@ def search_cars(
                 else DBCar.price_per_day.desc()
             )
 
+    rating_sub_query = (
+        select(
+            DBReview.reviewee_id,
+            func.sum(DBReview.rating).label("total_rating"),
+            func.count(DBReview.reviewee_id).label("total_count"),
+        )
+        .group_by(DBReview.reviewee_id)
+        .alias("sub_query")
+    )
+
     selected_attrs = [
         DBUser.id.label("owner_id"),
         DBUser.name.label("owner_name"),
         DBUser.last_name.label("owner_last_name"),
+        rating_sub_query.c.total_count.label("review count"),
+        case(
+            (rating_sub_query.c.total_count == 0, 0),
+            else_=(func.round(rating_sub_query.c.total_rating / rating_sub_query.c.total_count, 2)),
+        ).label("rating"),
         DBAddress.city,
         DBAddress.postal_code,
         DBAddress.latitude,
@@ -309,6 +324,7 @@ def search_cars(
         db.execute(
             select(*selected_attrs)
             .where(and_(*where_clause))
+            .outerjoin(rating_sub_query, rating_sub_query.c.reviewee_id == DBUser.id)
             .order_by(sort_by)
             .offset(skip)
             .limit(limit)
@@ -342,8 +358,9 @@ def test_rating(db: Session):
                 DBUser.id,
                 DBUser.name,
                 DBUser.last_name,
+                sub_query.c.total_count.label("Review count"),
                 case(
-                    (sub_query.c.total_count == 0, "None"),
+                    (sub_query.c.total_count == 0, 0),
                     else_=(sub_query.c.total_rating / sub_query.c.total_count),
                 ).label("rating"),
             )
