@@ -1,17 +1,20 @@
 from typing import List
+from app.services import rental
 from fastapi import Query
 from app.auth import oauth2
 from app.services.rental import create_rental
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.orm import Session
 from app.schemas.rental import RentalBase, RentalDisplay, RentalPeriod
-# from app.services.rental import (
-#     create_rental,
-#     get_rental_by_id,
-#     get_all_rentals,
-#     update_rental,
-#     delete_rental,
-# )
+from pydantic import ValidationError
+from app.utils import constants
+from app.services.rental import (
+    create_rental,
+    get_rental_by_id,
+    get_all_rentals,
+    update_rental,
+    delete_rental,
+)
 from app.core.database import get_db
 
 # router = APIRouter()
@@ -29,7 +32,7 @@ def create_new_rental(
     return create_rental(db, car_id, status, rental, current_user.id)
 
 
-# Get a rental by ID
+#Get a rental by ID
 @router.get("/{rental_id}", response_model=RentalDisplay)
 def get_rental(rental_id: int, db: Session = Depends(get_db)):
     rental = get_rental_by_id(db, rental_id)
@@ -39,9 +42,41 @@ def get_rental(rental_id: int, db: Session = Depends(get_db)):
 
 
 # Get all rentals
-@router.get("/", response_model=List[RentalDisplay])
-def get_rentals(db: Session = Depends(get_db)):
-    return get_all_rentals(db)
+# @router.get("/", response_model=List[RentalDisplay])
+# def get_rentals(db: Session = Depends(get_db)):
+#     # return get_all_rentals(db)
+#     return get_rentals(db)
+
+@router.get(
+    "/",
+    response_model=List[RentalDisplay],
+    summary="List all Rentals",
+    description="Retrieve a paginated list of all cars from the database.",
+)
+def list_rentals(
+    db: Session = Depends(get_db),
+    skip: int = Query(
+        0, ge=0, description="Number of records to skip (used for pagination)"
+    ),
+    limit: int = Query(
+        constants.QUERY_LIMIT_DEFAULT,
+        ge=1,
+        le=constants.QUERY_LIMIT_MAX,
+        description="Maximum number of records to return",
+    ),
+) -> List[RentalDisplay]:
+    """
+    Retrieve all rental entries from the database with pagination options.
+
+    Args:
+        db (Session): Database session dependency.
+        skip (int): Number of records to skip (used for pagination).
+        limit (int): Maximum number of records to return (used for pagination).
+
+    Returns:
+        List[RentalBase]: A list of rentals in the database based on pagination.
+    """
+    return rental.get_all_rentals(db, skip=skip, limit=limit)
 
 
 # Update a rental by ID

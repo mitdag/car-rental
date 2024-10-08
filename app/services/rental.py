@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from app.services.car import get_car
 from sqlalchemy.orm import Session
+from typing import Dict, List, Optional, Union
 
 from app.schemas.rental import RentalBase
 from app.models.rental import DBRental
@@ -37,8 +38,11 @@ def get_rental_by_id(db: Session, rental_id: int):
 
 
 # Retrieve all rentals
-def get_all_rentals(db: Session):
-    return db.query(DBRental).all()
+# def get_all_rentals(db: Session):
+#     return db.query(DBRental).all()
+
+def get_all_rentals(db: Session, skip: int = 0, limit: int = 100) -> List[DBRental]:
+    return db.query(DBRental).offset(skip).limit(limit).all()
 
 
 # Update a rental
