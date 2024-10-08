@@ -1,6 +1,4 @@
-from enum import Enum
-
-from sqlalchemy import Column, Integer, ForeignKey, Float, Date
+from sqlalchemy import Column, Integer, ForeignKey, Float, Date, Enum
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.schemas.enums import RentalStatus
