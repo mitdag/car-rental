@@ -11,6 +11,7 @@ from sqlalchemy import select, and_, or_, func
 from sqlalchemy.orm import aliased
 from datetime import datetime
 import app.utils.constants as constants
+from app.utils.logger import logger
 
 
 # Create a new rental
@@ -147,12 +148,34 @@ def update_rental(
 
 
 # Delete a rental
-def delete_rental(db: Session, rental_id: int):
+def delete_rental(db: Session, rental_id: int, current_user: DBUser):
     db_rental = db.query(DBRental).filter(DBRental.id == rental_id).first()
-    if db_rental:
+    if not db_rental:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No such rental"
+        )
+
+    if not current_user.is_admin() and current_user.id != db_rental.renter_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User can only delete own rentals.",
+        )
+
+    if not current_user.is_admin() and db_rental.status != RentalStatus.RESERVED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only reservations can be deleted.",
+        )
+
+    try:
         db.delete(db_rental)
         db.commit()
-    return db_rental
+        return db_rental
+    except Exception as exc:
+        logger.log(
+            f"Cannot delete rental with rental_id: {rental_id} "
+            f"current_user_id: {current_user.id} ({exc})"
+        )
 
 
 # new code

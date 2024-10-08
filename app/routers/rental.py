@@ -3,6 +3,7 @@ from typing import List, Union, Dict, Optional
 from app.auth.oauth2 import get_current_user
 from app.schemas.enums import RentalSort, SortDirection
 from fastapi import Query, status
+from fastapi.responses import JSONResponse
 from app.auth import oauth2
 from app.services.rental import create_rental, get_all_rentals, get_rental_by_id
 from fastapi import APIRouter, Depends, HTTPException
@@ -78,13 +79,13 @@ def update_existing_rental(
 
 
 # Delete a rental by ID
-@router.delete("/{rental_id}", response_model=RentalDisplay)
+@router.delete("/{rental_id}")
 def remove_rental(
     rental_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
-    deleted_rental = delete_rental(db, rental_id)
-    if deleted_rental is None:
-        raise HTTPException(status_code=404, detail="Rental not found")
-    return deleted_rental
+    delete_rental(db, rental_id, current_user)
+    return JSONResponse(
+        status_code=status.HTTP_204_NO_CONTENT, content={"message": "Deleted"}
+    )
