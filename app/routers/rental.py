@@ -21,7 +21,7 @@ router = APIRouter(prefix="/rentals", tags=["rentals"])
 
 
 # Create a new rental
-@router.post("/", response_model=RentalDisplay)
+@router.post("/", response_model=RentalDisplay, status_code=status.HTTP_201_CREATED)
 def create_new_rental(
     car_id: int,
     rental_period: RentalPeriod = Depends(),
@@ -87,5 +87,5 @@ def remove_rental(
 ):
     delete_rental(db, rental_id, current_user)
     return JSONResponse(
-        status_code=status.HTTP_204_NO_CONTENT, content={"message": "Deleted"}
+        status_code=status.HTTP_204_NO_CONTENT, content={"message": "Deleted."}
     )
