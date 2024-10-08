@@ -1,6 +1,7 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from app.services.car import get_car
 from sqlalchemy.orm import Session
+from typing import List
 
 from app.schemas.rental import RentalBase
 from app.models.rental import DBRental
@@ -11,9 +12,10 @@ from datetime import datetime
 
 # Create a new rental
 
+
 def create_rental(db: Session, car_id, status, rental: RentalBase, renter_id: int):
-    car= get_car(db, car_id)
-    if car.owner_id==renter_id:
+    car = get_car(db, car_id)
+    if car.owner_id == renter_id:
         raise HTTPException(status_code=404, detail="You are the owner of the car!")
     if not is_car_available(car_id, rental.start_date, rental.end_date, db):
         raise HTTPException(status_code=404, detail="Car is not availbale now!")
@@ -22,7 +24,7 @@ def create_rental(db: Session, car_id, status, rental: RentalBase, renter_id: in
         renter_id=renter_id,
         start_date=rental.start_date,
         end_date=rental.end_date,
-        total_price=(rental.start_date - rental.end_date).days*car.price_per_day,
+        total_price=(rental.start_date - rental.end_date).days * car.price_per_day,
         status=status,
     )
     db.add(db_rental)
@@ -37,8 +39,12 @@ def get_rental_by_id(db: Session, rental_id: int):
 
 
 # Retrieve all rentals
-def get_all_rentals(db: Session):
-    return db.query(DBRental).all()
+# def get_all_rentals(db: Session):
+#     return db.query(DBRental).all()
+
+
+def get_all_rentals(db: Session, skip: int = 0, limit: int = 100) -> List[DBRental]:
+    return db.query(DBRental).offset(skip).limit(limit).all()
 
 
 # Update a rental
@@ -63,32 +69,33 @@ def delete_rental(db: Session, rental_id: int):
         db.commit()
     return db_rental
 
-#new code
+
+# new code
 def is_car_available(car_id: int, start_date: datetime, end_date: datetime, db):
     rental_t1 = aliased(DBRental)
     rental_t2 = aliased(DBRental)
     result = db.execute(
-            select(rental_t1.car_id).where(
-                and_(
-                    rental_t1.car_id == car_id,
-                    rental_t1.car_id.notin_(
-                        select(rental_t2.car_id).where(
-                            and_(
-                                rental_t2.car_id == rental_t1.car_id,
-                                or_(
-                                    and_(
-                                        start_date >= rental_t2.start_date,
-                                        start_date <= rental_t2.end_date
-                                    ),
-                                    and_(
-                                        end_date >= rental_t2.start_date,
-                                        end_date <= rental_t2.end_date
-                                    )
-                                )
-                            )
+        select(rental_t1.car_id).where(
+            and_(
+                rental_t1.car_id == car_id,
+                rental_t1.car_id.notin_(
+                    select(rental_t2.car_id).where(
+                        and_(
+                            rental_t2.car_id == rental_t1.car_id,
+                            or_(
+                                and_(
+                                    start_date >= rental_t2.start_date,
+                                    start_date <= rental_t2.end_date,
+                                ),
+                                and_(
+                                    end_date >= rental_t2.start_date,
+                                    end_date <= rental_t2.end_date,
+                                ),
+                            ),
                         )
                     )
-                )
+                ),
             )
+        )
     ).all()
     return len(result) != 0

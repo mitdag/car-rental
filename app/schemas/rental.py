@@ -20,6 +20,7 @@ class RentalBase(BaseModel):
 class RentalDisplay(RentalBase):
     id: int
     renter_id: int
+    total_price: float
 
     class Config:
         orm_mode = True

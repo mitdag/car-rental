@@ -5,9 +5,8 @@ from typing import Dict, List, Optional, Union
 
 from fastapi import HTTPException, status
 from sqlalchemy import and_, or_, func, literal_column, select, case
-from fastapi import HTTPException, UploadFile, status
+from fastapi import UploadFile
 from PIL import Image
-from sqlalchemy import and_, func, literal_column, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.address import DBAddress
