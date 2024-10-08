@@ -1,6 +1,9 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, Date
+from enum import Enum
+
+from sqlalchemy import Column, Integer, ForeignKey, Float, Date
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+from app.schemas.enums import RentalStatus
 
 
 class DBRental(Base):
@@ -12,7 +15,7 @@ class DBRental(Base):
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     total_price = Column(Float, nullable=False)
-    status = Column(String, nullable=False)
+    status = Column(Enum(RentalStatus), default=RentalStatus.RESERVED, nullable=False)
 
     # Relationships
     car = relationship("DBCar", back_populates="rentals")

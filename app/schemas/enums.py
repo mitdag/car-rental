@@ -41,7 +41,7 @@ class CarSearchSortType(str, Enum):
     MAKE = "MAKE"
 
 
-class CarSearchSortDirection(str, Enum):
+class SortDirection(str, Enum):
     ASC = "ASC"
     DESC = "DESC"
 
@@ -110,3 +110,9 @@ class RentalStatus(str, Enum):
 
     # Reservation is cancelled by the renter or the owner
     CANCELLED = "CANCELLED"
+
+
+class RentalSort(str, Enum):
+    DATE = "DATE"
+    STATUS = "STATUS"
+    TOTAL_PRICE = "TOTAL_PRICE"

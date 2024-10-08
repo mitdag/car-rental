@@ -1,6 +1,6 @@
 import os
 import shutil
-from pathlib import Path as pathlib_path
+from pathlib import Path as pathlibPath
 
 from fastapi import UploadFile, status
 from fastapi.exceptions import HTTPException
@@ -89,7 +89,7 @@ def modify_user(user_id: int, user_profile: UserProfileForm, db: Session):
 
 
 def get_picture_name_and_path(user_id: int):
-    current_dir = pathlib_path(os.path.dirname(__file__)).as_posix()
+    current_dir = pathlibPath(os.path.dirname(__file__)).as_posix()
     pictures_path = (
         current_dir[: current_dir.rindex("/")] + "/static/images/profile-pictures"
     )

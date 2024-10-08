@@ -27,7 +27,7 @@ from app.schemas.car import CarCreate, CarDisplay, CarUpdate
 from app.schemas.enums import (
     CarEngineType,
     CarMake,
-    CarSearchSortDirection,
+    SortDirection,
     CarSearchSortType,
     CarTransmissionType,
     UserType,
@@ -125,7 +125,7 @@ def search_car(
     price_max: int = Query(None, ge=1, description="Maximum daily price for the rent"),
     make: str = Query(None, description="Make of the car"),
     sort: CarSearchSortType = Query(None, description="Sort parameter"),
-    sort_direction: CarSearchSortDirection = Query(None, description="Sort direction"),
+    sort_direction: SortDirection = Query(None, description="Sort direction"),
     skip: int = Query(
         default=0, ge=0, description="Used for pagination for the requests."
     ),

@@ -17,7 +17,7 @@ from app.models.user import DBUser
 from app.schemas.car import CarBase, CarUpdate
 from app.schemas.enums import (
     CarEngineType,
-    CarSearchSortDirection,
+    SortDirection,
     CarSearchSortType,
     CarTransmissionType,
 )
@@ -119,7 +119,7 @@ def search_cars(
     price_max: int,
     make: str,
     sort: CarSearchSortType,
-    sort_direction: CarSearchSortDirection,
+    sort_direction: SortDirection,
     skip: int,
     limit: int,
     db: Session,
@@ -149,6 +149,8 @@ def search_cars(
             "cars": List of matching DBCar objects
         }
     """
+    # Following lines are commented so that if a user does not provide any search criteria this function returns
+    # all cars without any filtering
     # if (
     #     not distance_km
     #     and availability_period
@@ -175,39 +177,40 @@ def search_cars(
     sort_by = None
     if sort:
         if not sort_direction:
-            sort_direction = CarSearchSortDirection.ASC
+            sort_direction = SortDirection.ASC
         # Ignore the sort request if it is "DISTANCE" and a distance value is not provided
         if distance_km and sort == CarSearchSortType.DISTANCE:
             sort_by = (
                 literal_column("distance").asc()
-                if sort_direction == CarSearchSortDirection.ASC
+                if sort_direction == SortDirection.ASC
                 else literal_column("distance").desc()
             )
         elif sort == CarSearchSortType.ENGINE_TYPE:
             sort_by = (
                 DBCar.motor_type.asc()
-                if sort_direction == CarSearchSortDirection.ASC
+                if sort_direction == SortDirection.ASC
                 else DBCar.motor_type.desc()
             )
         elif sort == CarSearchSortType.TRANSMISSION_TYPE:
             sort_by = (
                 DBCar.transmission_type.asc()
-                if sort_direction == CarSearchSortDirection.ASC
+                if sort_direction == SortDirection.ASC
                 else DBCar.transmission_type.desc()
             )
         elif sort == CarSearchSortType.MAKE:
             sort_by = (
                 DBCar.make.asc()
-                if sort_direction == CarSearchSortDirection.ASC
+                if sort_direction == SortDirection.ASC
                 else DBCar.make.desc()
             )
         elif sort == CarSearchSortType.PRICE:
             sort_by = (
                 DBCar.price_per_day.asc()
-                if sort_direction == CarSearchSortDirection.ASC
+                if sort_direction == SortDirection.ASC
                 else DBCar.price_per_day.desc()
             )
 
+    # This subquery is used to add (join) user ratings to the response
     rating_sub_query = (
         select(
             DBReview.reviewee_id,
@@ -225,7 +228,11 @@ def search_cars(
         rating_sub_query.c.total_count.label("review count"),
         case(
             (rating_sub_query.c.total_count == 0, 0),
-            else_=(func.round(rating_sub_query.c.total_rating / rating_sub_query.c.total_count, 2)),
+            else_=(
+                func.round(
+                    rating_sub_query.c.total_rating / rating_sub_query.c.total_count, 2
+                )
+            ),
         ).label("rating"),
         DBAddress.city,
         DBAddress.postal_code,
