@@ -39,3 +39,6 @@ class DBUser(Base):
     reviews_received = relationship(
         "DBReview", foreign_keys="[DBReview.reviewee_id]", back_populates="reviewee"
     )
+
+    def is_admin(self):
+        return self.user_type == UserType.ADMIN

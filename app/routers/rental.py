@@ -2,12 +2,12 @@ from typing import List, Union, Dict, Optional
 
 from app.auth.oauth2 import get_current_user
 from app.schemas.enums import RentalSort, SortDirection
-from fastapi import Query
+from fastapi import Query, status
 from app.auth import oauth2
-from app.services.rental import create_rental, get_all_rentals
+from app.services.rental import create_rental, get_all_rentals, get_rental_by_id
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.schemas.rental import RentalBase, RentalDisplay, RentalPeriod
+from app.schemas.rental import RentalDisplay, RentalPeriod
 from app.utils import constants
 from app.services.rental import (
     update_rental,
@@ -27,6 +27,11 @@ def create_new_rental(
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
+    if not rental_period.start_date or not rental_period.end_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide a start and and date",
+        )
     return create_rental(db, car_id, rental_period, current_user.id)
 
 
@@ -44,7 +49,7 @@ def get_rentals(
     current_user=Depends(get_current_user),
 ):
     return get_all_rentals(
-        db, current_user, rental_id, sort_by, sort_dir, car_id, skip, limit
+        db, current_user, rental_id, car_id, sort_by, sort_dir, skip, limit
     )
 
 
@@ -55,69 +60,21 @@ def get_rental(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    rentals = get_all_rentals(db=db, rental_id=rental_id, current_user=current_user)
-    return (
-        rentals["rentals"][0]
-        if rentals["rentals"] and len(rentals["rentals"]) > 0
-        else None
-    )
-    # rental_db = get_rental_by_id(db, rental_id)
-    # if rental_db is None:
-    #     raise HTTPException(status_code=404, detail="Rental not found")
-    # return rental_db
-
-
-# Get all rentals
-# @router.get("/", response_model=List[RentalDisplay])
-# def get_rentals(db: Session = Depends(get_db)):
-#     # return get_all_rentals(db)
-#     return get_rentals(db)
-
-
-# @router.get(
-#     "/",
-#     response_model=List[RentalDisplay],
-#     summary="List all Rentals",
-#     description="Retrieve a paginated list of all cars from the database.",
-# )
-# def list_rentals(
-#         db: Session = Depends(get_db),
-#         skip: int = Query(
-#             0, ge=0, description="Number of records to skip (used for pagination)"
-#         ),
-#         limit: int = Query(
-#             constants.QUERY_LIMIT_DEFAULT,
-#             ge=1,
-#             le=constants.QUERY_LIMIT_MAX,
-#             description="Maximum number of records to return",
-#         ),
-# ) -> List[RentalDisplay]:
-#     """
-#     Retrieve all rental entries from the database with pagination options.
-#
-#     Args:
-#         db (Session): Database session dependency.
-#         skip (int): Number of records to skip (used for pagination).
-#         limit (int): Maximum number of records to return (used for pagination).
-#
-#     Returns:
-#         List[RentalBase]: A list of rentals in the database based on pagination.
-#     """
-#     return rental.get_all_rentals(db, skip=skip, limit=limit)
+    rental_db = get_rental_by_id(db, rental_id, current_user)
+    if rental_db is None:
+        raise HTTPException(status_code=404, detail="Rental not found")
+    return rental_db
 
 
 # Update a rental by ID
 @router.put("/{rental_id}", response_model=RentalDisplay)
 def update_existing_rental(
     rental_id: int,
-    rental: RentalBase,
+    rental: RentalPeriod = Depends(),
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
-    updated_rental = update_rental(db, rental_id, rental)
-    if updated_rental is None:
-        raise HTTPException(status_code=404, detail="Rental not found")
-    return updated_rental
+    return update_rental(db, current_user, rental_id, rental)
 
 
 # Delete a rental by ID
