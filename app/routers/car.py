@@ -27,9 +27,9 @@ from app.schemas.car import CarCreate, CarDisplay, CarUpdate
 from app.schemas.enums import (
     CarEngineType,
     CarMake,
-    SortDirection,
     CarSearchSortType,
     CarTransmissionType,
+    SortDirection,
     UserType,
 )
 from app.schemas.rental import RentalPeriod
@@ -44,6 +44,7 @@ router = APIRouter(prefix="/cars", tags=["cars"])
     response_model=CarDisplay,
     summary="Create a car",
     description="Create a new car entry. Requires authenticated user.",
+    status_code=status.HTTP_201_CREATED,
 )
 def create_car(
     request: CarCreate,
@@ -60,8 +61,14 @@ def create_car(
 
     Returns:
         CarDisplay: The newly created car.
+
+    Raises:
+        HTTPException: If car creation fails.
     """
-    return car.create_car(db, request, current_user.id)
+
+    new_car = car.create_car(db, request, current_user.id)
+
+    return new_car
 
 
 # Pagination example
