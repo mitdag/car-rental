@@ -1,11 +1,13 @@
 import shutil
 import uuid
 from pathlib import Path
+from sqlite3 import IntegrityError
 from typing import Dict, List, Optional, Union
 
 from fastapi import HTTPException, UploadFile, status
 from PIL import Image
 from sqlalchemy import and_, case, func, literal_column, or_, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models.address import DBAddress
@@ -13,12 +15,12 @@ from app.models.car import DBCar
 from app.models.rental import DBRental
 from app.models.review import DBReview
 from app.models.user import DBUser
-from app.schemas.car import CarBase, CarUpdate
+from app.schemas.car import CarCreate, CarUpdate
 from app.schemas.enums import (
     CarEngineType,
-    SortDirection,
     CarSearchSortType,
     CarTransmissionType,
+    SortDirection,
 )
 from app.schemas.rental import RentalPeriod
 from app.utils.constants import CAR_IMAGES_PATH
@@ -27,12 +29,55 @@ from app.utils.logger import logger
 # Database Operations
 
 
-def create_car(db: Session, car: CarBase, user_id: int) -> DBCar:
-    db_car = DBCar(**car.model_dump(), owner_id=user_id)
-    db.add(db_car)
-    db.commit()
-    db.refresh(db_car)
-    return db_car
+def create_car(db: Session, car: CarCreate, user_id: int) -> DBCar:
+    """
+    Helper function to create a car in the database.
+
+    Args:
+        db (Session): The database session.
+        car (CarCreate): The car details to create.
+        user_id (int): The user ID of the owner.
+
+    Returns:
+        DBCar: The newly created car object.
+
+    Raises:
+        HTTPException: If any database error occurs or the car cannot be created.
+    """
+    try:
+        # Create the car object
+        db_car = DBCar(**car.model_dump(), owner_id=user_id)
+
+        # Add and commit the new car to the database
+        db.add(db_car)
+        db.commit()
+        db.refresh(db_car)  # Refresh the instance to get updated data
+
+        return db_car
+
+    except IntegrityError as e:
+        db.rollback()  # Rollback the transaction on failure
+        logger.error(f"Integrity error during car creation: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Integrity error: possibly a duplicate entry or invalid foreign key.",
+        ) from e
+
+    except SQLAlchemyError as e:
+        db.rollback()  # Rollback on any general SQLAlchemy error
+        logger.error(f"Database error while creating car: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="A server error occurred while creating the car.",
+        ) from e
+
+    except Exception as e:
+        db.rollback()  # Catch-all to ensure rollback on any unexpected errors
+        logger.error(f"Unexpected error while creating car: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred. Please try again later.",
+        ) from e
 
 
 def get_car(db: Session, car_id: int) -> Optional[DBCar]:

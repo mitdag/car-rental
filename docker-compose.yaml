@@ -1,0 +1,29 @@
+# ref: https://github.com/Kludex/fastapi-prometheus-grafana/tree/master
+version: '3.11'
+
+services:
+  fastapi:
+    build: .
+    ports:
+      - "8000:8000"
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    env_file:
+      - ./grafana/config.monitoring
+
+volumes:
+  grafana_data:
