@@ -76,3 +76,4 @@ Additionally, a default dashboard is configured, and a Prometheus data source ha
 ## References
 
 - [Example: FastAPI, Prometheus, and Grafana Integration](https://github.com/Kludex/fastapi-prometheus-grafana/tree/master)
+-  Complete FastAPI Masterclass from Scratch (Udemy)
