@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.enums import CarEngineType, CarMake, CarTransmissionType
-from app.schemas.user import UserDisplay
+from app.schemas.user import UserPublicDisplay
 
 
 def validate_year(value: int) -> int:
@@ -77,7 +77,7 @@ class CarUpdate(BaseModel):
 
 class CarDisplay(BaseModel):
     id: int
-    owner: UserDisplay
+    owner: UserPublicDisplay
     make: str
     model: str
     year: int
