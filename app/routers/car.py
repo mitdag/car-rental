@@ -236,7 +236,7 @@ def update_car(
     "/{car_id}",
     summary="Delete a car",
     description="Delete a car from the database by its ID. Requires authentication.",
-    tags=["cars", "admin"],
+    tags=["cars"],  # admin deleted
     status_code=status.HTTP_204_NO_CONTENT,
 )
 def delete_car(
