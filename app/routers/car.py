@@ -336,7 +336,10 @@ def get_car_pictures(
     return car.get_car_pictures(car_id)
 
 
-@router.delete("/{car_id}/car-pictures/{filename}")
+@router.delete(
+    "/{car_id}/car-pictures/{filename}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 def delete_car_picture(
     car_id: int = Path(...),
     filename: str = Path(...),
@@ -373,7 +376,10 @@ def delete_car_picture(
         )
 
 
-@router.delete("/{car_id}/car-pictures")
+@router.delete(
+    "/{car_id}/car-pictures",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 def delete_all_car_pictures(
     car_id: int = Path(...),
     db: Session = Depends(get_db),
