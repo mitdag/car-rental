@@ -11,3 +11,5 @@ alembic
 sqlalchemy-utils
 Pillow
 fastapi-pagination
+prometheus-fastapi-instrumentator
+prometheus-client
