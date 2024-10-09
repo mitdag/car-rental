@@ -43,7 +43,7 @@ def read_file(file_name):
     return buf
 
 
-# @router.get("/create-test-all")
+@router.get("/create-test-all")
 def create_test_all(db: Session = Depends(database.get_db)):
     create_test_users(db)
     create_test_cars(db)
