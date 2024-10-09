@@ -1,11 +1,13 @@
 # ref: https://github.com/Kludex/fastapi-prometheus-grafana/tree/master
-version: '3.11'
+version: '3.3'
 
 services:
   fastapi:
     build: .
     ports:
       - "8000:8000"
+    volumes:
+      - ./car_rentals.db:/app/car_rentals.db
 
   prometheus:
     image: prom/prometheus
@@ -24,6 +26,3 @@ services:
       - ./grafana/provisioning:/etc/grafana/provisioning
     env_file:
       - ./grafana/config.monitoring
-
-volumes:
-  grafana_data:
