@@ -92,7 +92,7 @@ def get_users(
     "/{user_id}",
     response_model=UserDisplay,
 )
-def modify_user_profile_with_path(
+def update_user(
     user_profile: UserProfileForm,
     user_id: int = Path(...),
     db: Session = Depends(database.get_db),
@@ -110,31 +110,6 @@ def modify_user_profile_with_path(
         )
 
     return user_service.modify_user(user_id, user_profile, db)
-
-
-@router.put(
-    "",
-    response_model=UserDisplay,
-)
-def modify_user_profile_with_query(
-    user_profile: UserProfileForm,
-    user_id: int = Query(...),
-    db: Session = Depends(database.get_db),
-    current_user: DBUser = Depends(oauth2.get_current_user),
-):
-    if not user_profile:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="user profile data is missing.",
-        )
-    if user_id != current_user.id and not current_user.is_admin():
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User cannot modify another user.",
-        )
-
-    user = user_service.modify_user(user_id, user_profile, db)
-    return user
 
 
 @router.get(

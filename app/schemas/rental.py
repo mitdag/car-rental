@@ -1,11 +1,12 @@
 from datetime import datetime, timezone, timedelta
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import Query, HTTPException
 from pydantic import BaseModel, Field, model_validator
 from starlette import status
 
 import app.utils.constants as constants
+from app.schemas.review import ReviewDisplay
 
 
 class RentalBase(BaseModel):
@@ -13,6 +14,7 @@ class RentalBase(BaseModel):
     start_date: datetime
     end_date: datetime
     status: str
+
     class Config:
         extra = "forbid"  # Prevents extra fields
 
@@ -21,6 +23,7 @@ class RentalDisplay(RentalBase):
     id: int
     renter_id: int
     total_price: float
+    reviews: Optional[List[ReviewDisplay]]
 
     class Config:
         orm_mode = True
