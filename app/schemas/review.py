@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, conint, constr
 
 # Here under is what is added
-from app.schemas.user import UserDisplay
+from app.schemas.user import UserPublicDisplay
 
 
 # Review Schema
@@ -45,8 +45,8 @@ class ReviewDisplay(BaseModel):
     # Here under is what is added
     rental_id: int
     # reviewer_id: int
-    reviewer: UserDisplay
-    reviewee: UserDisplay
+    reviewer: UserPublicDisplay
+    reviewee: UserPublicDisplay
     review_date: datetime
 
     class Config:
