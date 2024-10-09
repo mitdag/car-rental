@@ -182,6 +182,10 @@ def delete_rental(db: Session, rental_id: int, current_user: DBUser):
 def is_car_available(
     car_id: int, start_date: datetime, end_date: datetime, db, renter_id: int = None
 ):
+    first_rental = db.query(DBRental).filter(DBRental.car_id == car_id).first()
+    if not first_rental:
+        return True
+
     rental_t1 = aliased(DBRental)
     rental_t2 = aliased(DBRental)
     q_filter = [rental_t2.car_id == rental_t1.car_id]
@@ -194,7 +198,6 @@ def is_car_available(
                 rental_t1.car_id.notin_(
                     select(rental_t2.car_id).where(
                         and_(
-                            # rental_t2.car_id == rental_t1.car_id,
                             *q_filter,
                             or_(
                                 and_(
