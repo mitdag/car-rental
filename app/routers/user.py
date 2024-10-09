@@ -14,8 +14,8 @@ from sqlalchemy.orm import Session
 
 from app.auth import oauth2
 from app.core import database
+from app.models.user import DBUser
 from app.schemas.car import CarDisplay
-from app.schemas.enums import UserType
 from app.schemas.user import (
     UserBase,
     UserDisplay,
@@ -41,10 +41,23 @@ def check_user_id_and_path_parameter(user_id: int, path_param: int):
 
 @router.get(
     "",
-    response_model=Dict[str, Union[Optional[int], List[UserDisplay]]],
-    summary="Get all users (admin only) (paginated)",
+    response_model=Dict[
+        str,
+        Union[
+            Optional[int],
+            Optional[List[UserDisplay]],
+            Optional[UserDisplay],
+            Optional[UserPublicDisplay],
+        ],
+    ],
+    summary="Get users",
+    description="Admins can get all users without providing a user_id. Other users must provide "
+    "a user_id. Response is tailored according to the user: user gets detailed info "
+    "about himself/herself. User can get limited info for other users. Admin gets "
+    "details for all users.",
 )
 def get_users(
+    user_id: int = Query(None),
     skip: int = Query(0, description="Offset start number."),
     limit: int = Query(
         default=constants.QUERY_LIMIT_DEFAULT,
@@ -53,41 +66,92 @@ def get_users(
     db: Session = Depends(database.get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
-    if current_user.user_type != UserType.ADMIN:
+    if not current_user.is_admin() and not user_id:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Admin only endpoint"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="A user id must be provided.",
         )
+    if user_id:
+        if current_user.id == user_id:
+            return {
+                "user": create_user_private_display(
+                    user_service.get_user_by_id(user_id, db)
+                )
+            }
+        return {
+            "user": create_user_public_display(user_service.get_user_by_id(user_id, db))
+        }
+
     return user_service.get_users(db, skip, min(limit, constants.QUERY_LIMIT_MAX))
-
-
-@router.get("/{user_id}", response_model=Union[UserDisplay, UserPublicDisplay])
-def get_user(
-    user_id: int = Path(...),
-    db: Session = Depends(database.get_db),
-    current_user: UserBase = Depends(oauth2.get_current_user),
-):
-    if current_user.id == user_id:
-        return create_user_private_display(user_service.get_user_by_id(user_id, db))
-    return create_user_public_display(user_service.get_user_by_id(user_id, db))
 
 
 @router.put(
     "/{user_id}",
     response_model=UserDisplay,
 )
-def modify_user_profile(
+def modify_user_profile_with_path(
     user_profile: UserProfileForm,
     user_id: int = Path(...),
     db: Session = Depends(database.get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user: DBUser = Depends(oauth2.get_current_user),
 ):
-    check_user_id_and_path_parameter(current_user.id, user_id)
     if not user_profile:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="user profile data is missing.",
         )
-    return user_service.modify_user(current_user.id, user_profile, db)
+    if user_id != current_user.id and not current_user.is_admin():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User cannot modify another user.",
+        )
+
+    return user_service.modify_user(user_id, user_profile, db)
+
+
+@router.put(
+    "",
+    response_model=UserDisplay,
+)
+def modify_user_profile_with_query(
+    user_profile: UserProfileForm,
+    user_id: int = Query(...),
+    db: Session = Depends(database.get_db),
+    current_user: DBUser = Depends(oauth2.get_current_user),
+):
+    if not user_profile:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="user profile data is missing.",
+        )
+    if user_id != current_user.id and not current_user.is_admin():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User cannot modify another user.",
+        )
+
+    user = user_service.modify_user(user_id, user_profile, db)
+    return user
+
+
+@router.get(
+    "/{user_id}",
+    response_model=Dict[str, Union[UserDisplay, Optional[UserPublicDisplay]]],
+)
+def get_user(
+    user_id: int = Path(...),
+    db: Session = Depends(database.get_db),
+    current_user: UserBase = Depends(oauth2.get_current_user),
+):
+    if current_user.id == user_id or current_user.is_admin():
+        return {
+            "user": create_user_private_display(
+                user_service.get_user_by_id(user_id, db)
+            )
+        }
+    return {
+        "user": create_user_public_display(user_service.get_user_by_id(user_id, db))
+    }
 
 
 @router.post("/{user_id}/profile-picture")
@@ -115,12 +179,18 @@ def get_profile_picture_link(
     return user_service.get_profile_picture_link(user_id, db)
 
 
-@router.delete("")
+@router.delete("", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(
+    user_id: int = Query(None),
     db: Session = Depends(database.get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user: DBUser = Depends(oauth2.get_current_user),
 ):
-    return user_service.delete_user(current_user.id, db)
+    if user_id and not current_user.is_admin() and user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User cannot delete another user.",
+        )
+    return user_service.delete_user(current_user.id if not user_id else user_id, db)
 
 
 @router.get("/{user_id}/cars", response_model=List[CarDisplay], tags=["users", "cars"])

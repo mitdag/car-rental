@@ -246,7 +246,11 @@ def search_cars(
         DBCar.year,
         DBCar.description,
     ]
-    where_clause = [DBUser.id == DBAddress.user_id, DBUser.id == DBCar.owner_id]
+    where_clause = [
+        DBUser.id == DBAddress.user_id,
+        DBUser.id == DBCar.owner_id,
+        DBCar.is_listed is True,
+    ]
 
     # Query for distance calculation. The resulting value will appear as "distance" in query result.
     position_field = None

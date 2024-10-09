@@ -5,10 +5,12 @@ from pathlib import Path as pathlibPath
 from fastapi import UploadFile, status
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.models.user import DBUser
 from app.schemas.user import UserProfileForm
 from app.services import address as address_service
+from app.utils import constants
 from app.utils.constants import PROFILE_PICTURES_PATH, DEFAULT_PROFILE_PICTURE_FILE
 from app.utils.logger import logger
 from app.utils.hash import Hash
@@ -32,16 +34,21 @@ def get_user_by_email(email: str, db: Session):
     return user
 
 
-def get_users(db: Session, skip: int, limit: int = 20):
+def get_users(db: Session, skip: int = 0, limit: int = 20):
+    limit = min(limit, constants.QUERY_LIMIT_MAX)
     if skip < 0 or limit < 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Skip and limit must be positive integers",
         )
-    result = db.query(DBUser).offset(skip).limit(limit).all()
+    total = db.query(func.count(DBUser.id)).scalar()
+    users = db.query(DBUser).offset(skip).limit(limit).all()
     return {
-        "next_offset": (skip + limit) if len(result) == limit else None,
-        "users": result,
+        "current_offset": skip,
+        "counts": len(users),
+        "total_counts": total,
+        "next_offset": (skip + limit) if len(users) == limit else None,
+        "cars": users,
     }
 
 

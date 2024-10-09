@@ -32,7 +32,9 @@ class DBUser(Base):
     user_favorites = relationship(
         "DBCar", secondary="favorites", back_populates="favorited_by"
     )
-    rentals = relationship("DBRental", back_populates="renter")
+    rentals = relationship(
+        "DBRental", back_populates="renter", cascade="all, delete-orphan"
+    )
     reviews_written = relationship(
         "DBReview", foreign_keys="[DBReview.reviewer_id]", back_populates="reviewer"
     )
