@@ -266,7 +266,10 @@ def delete_car(
     return car.delete_car(db, car_id)
 
 
-@router.post("/{car_id}/car-pictures")
+@router.post(
+    "/{car_id}/car-pictures",
+    status_code=status.HTTP_201_CREATED,
+)
 def upload_car_picture(
     car_id: int = Path(...),
     picture: UploadFile = File(
