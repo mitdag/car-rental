@@ -27,9 +27,9 @@ from app.schemas.car import CarCreate, CarDisplay, CarUpdate
 from app.schemas.enums import (
     CarEngineType,
     CarMake,
-    SortDirection,
     CarSearchSortType,
     CarTransmissionType,
+    SortDirection,
     UserType,
 )
 from app.schemas.rental import RentalPeriod
@@ -44,6 +44,7 @@ router = APIRouter(prefix="/cars", tags=["cars"])
     response_model=CarDisplay,
     summary="Create a car",
     description="Create a new car entry. Requires authenticated user.",
+    status_code=status.HTTP_201_CREATED,
 )
 def create_car(
     request: CarCreate,
@@ -60,8 +61,14 @@ def create_car(
 
     Returns:
         CarDisplay: The newly created car.
+
+    Raises:
+        HTTPException: If car creation fails.
     """
-    return car.create_car(db, request, current_user.id)
+
+    new_car = car.create_car(db, request, current_user.id)
+
+    return new_car
 
 
 # Pagination example
@@ -230,6 +237,7 @@ def update_car(
     summary="Delete a car",
     description="Delete a car from the database by its ID. Requires authentication.",
     tags=["cars", "admin"],
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 def delete_car(
     car_id: int,
@@ -258,7 +266,10 @@ def delete_car(
     return car.delete_car(db, car_id)
 
 
-@router.post("/{car_id}/car-pictures")
+@router.post(
+    "/{car_id}/car-pictures",
+    status_code=status.HTTP_201_CREATED,
+)
 def upload_car_picture(
     car_id: int = Path(...),
     picture: UploadFile = File(
@@ -328,7 +339,10 @@ def get_car_pictures(
     return car.get_car_pictures(car_id)
 
 
-@router.delete("/{car_id}/car-pictures/{filename}")
+@router.delete(
+    "/{car_id}/car-pictures/{filename}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 def delete_car_picture(
     car_id: int = Path(...),
     filename: str = Path(...),
@@ -365,7 +379,10 @@ def delete_car_picture(
         )
 
 
-@router.delete("/{car_id}/car-pictures")
+@router.delete(
+    "/{car_id}/car-pictures",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 def delete_all_car_pictures(
     car_id: int = Path(...),
     db: Session = Depends(get_db),
