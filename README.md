@@ -72,3 +72,7 @@ The command is used to roll back the last applied migration. The number of steps
 Prometheus metrics are automatically collected using prometheus-fastapi-instrumentator. 
 
 Additionally, a default dashboard is configured, and a Prometheus data source has been added in the repository for easy monitoring and visualization of the application metrics.
+
+## References
+
+- [Example: FastAPI, Prometheus, and Grafana Integration](https://github.com/Kludex/fastapi-prometheus-grafana/tree/master)
