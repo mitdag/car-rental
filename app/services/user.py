@@ -180,3 +180,8 @@ def change_password(user_id: int, new_password: str, db: Session):
     db.commit()
     db.flush(user)
     return {"user_id": user.id, "result": "Password is changed"}
+
+
+def get_user_rentals(user_id: int, db: Session):
+    user: DBUser = db.query(DBUser).filter(DBUser.id == user_id).all()
+    return user.rentals

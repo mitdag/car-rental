@@ -197,9 +197,7 @@ def delete_user(
 def read_cars_by_user(
     user_id: int = Path(...),
     db: Session = Depends(database.get_db),
-    current_user=Depends(oauth2.get_current_user),
 ):
-    check_user_id_and_path_parameter(current_user.id, user_id)
     cars = car_service.get_cars_by_user(db, user_id)
     if not cars:
         raise HTTPException(status_code=404, detail="Cars not found for this user")
@@ -219,3 +217,16 @@ def change_password(
 ):
     check_user_id_and_path_parameter(current_user.id, user_id)
     return user_service.change_password(user_id, new_password, db)
+
+
+# @router.get("/{user_id}/rentals")
+# def get_user_rentals(
+#         user_id: int = Path(...),
+#         db=Depends(database.get_db),
+#         current_user: DBUser=Depends(oauth2.get_current_user)
+# ):
+#     if not current_user.is_admin() and current_user.id != user_id:
+#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail= "User cannot query other user's rentals.")
+#
+#     rentals = user_service.get_user_rentals(user_id, db)
+#     return rentals
