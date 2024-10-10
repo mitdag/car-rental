@@ -12,11 +12,11 @@ def create_review(
 ) -> DBReview:
      #aditional validations
     # Validation 1: Ensure reviewee_id is provided
-    if review.reviewee_id is None:
+    if reviewee_id is None:
         raise ValueError("Reviewee ID must be provided.")
 
     # Validation 2: Ensure the reviewer and reviewee are not the same person
-    if reviewer_id == review.reviewee_id:
+    if reviewer_id == reviewee_id:
         raise ValueError("A reviewer cannot review themselves.")
 
     # Validation 3: Ensure the rating is within a valid range (1-5, for example)
