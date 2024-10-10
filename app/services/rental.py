@@ -1,18 +1,19 @@
+from datetime import datetime
+from typing import Dict, List, Union
+
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy import and_, func, or_, select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session, aliased, joinedload
+
+import app.utils.constants as constants
+from app.models.car import DBCar
 from app.models.rental import DBRental
 from app.models.user import DBUser
-from app.schemas.enums import RentalStatus, RentalSort, SortDirection
-from app.services.car import get_car
-from typing import List, Dict, Union
-
+from app.schemas.enums import RentalSort, RentalStatus, SortDirection
 from app.schemas.rental import RentalPeriod
-from sqlalchemy import select, and_, or_, func
-from sqlalchemy.orm import aliased
-from datetime import datetime
-import app.utils.constants as constants
+from app.services.car import get_car
 from app.utils.logger import logger
-
 
 # Create a new rental
 
@@ -41,10 +42,46 @@ def create_rental(db: Session, car_id, rental: RentalPeriod, renter_id: int):
 
 # Retrieve rental by ID
 def get_rental_by_id(db: Session, rental_id: int, current_user: DBUser):
-    q_filter = [DBRental.id == rental_id]
-    if not current_user.is_admin():
-        q_filter.append(DBRental.renter_id == current_user.id)
-    return db.query(DBRental).filter(and_(*q_filter)).first()
+    # Build filter conditions
+    try:
+        q_filter = [DBRental.id == rental_id]
+
+        # Restrict access to either the renter or the owner, unless the user is an admin
+        if not current_user.is_admin():
+            q_filter.append(
+                or_(
+                    DBRental.renter_id
+                    == current_user.id,  # The current user is the renter
+                    DBCar.owner_id
+                    == current_user.id,  # The current user is the car owner
+                )
+            )
+
+        # Query with a join to the DBCar table
+        rental = (
+            db.query(DBRental)
+            .join(DBCar, DBRental.car_id == DBCar.id)
+            .options(joinedload(DBRental.car))
+            .filter(and_(*q_filter))
+            .first()
+        )
+
+        # Handle case where rental is not found
+        if rental is None:
+            logger.warning(f"Rental with id {rental_id} not found.")
+            raise HTTPException(status_code=404, detail="Rental not found")
+
+        return rental
+
+    except SQLAlchemyError as e:
+        # Log SQLAlchemy errors
+        logger.error(f"Database error occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+    except Exception as e:
+        # Catch-all for any other unexpected errors
+        logger.error(f"Unexpected error occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 
 # Retrieve all rentals
