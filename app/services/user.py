@@ -140,6 +140,17 @@ def get_profile_picture_link(user_id: int, db):
     return f"static/{PROFILE_PICTURES_PATH}/{profile_picture_file}"
 
 
+def delete_profile_picture(user_id: int, db):
+    current_files, file_name_no_ext, pictures_path = get_picture_name_and_path(user_id)
+    if len(current_files) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User has no profile picture"
+        )
+    for f in current_files:
+        os.remove(f"{pictures_path}/{f}")
+    return "deleted"
+
+
 def delete_user(user_id: int, db: Session):
     user = db.query(DBUser).filter(user_id == DBUser.id).first()
     if not user:
