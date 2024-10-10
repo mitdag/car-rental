@@ -13,7 +13,7 @@ class DBRental(Base):
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     total_price = Column(Float, nullable=False)
-    status = Column(Enum(RentalStatus), default=RentalStatus.BOOKED, nullable=False)
+    status = Column(Enum(RentalStatus), default=RentalStatus.RESERVED, nullable=False)
 
     # Relationships
     car = relationship("DBCar", back_populates="rentals")
