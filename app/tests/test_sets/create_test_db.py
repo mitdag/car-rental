@@ -245,7 +245,7 @@ def create_rentals_and_reviews(db: Session = Depends(database.get_db)):
             if now > rental["end_date"]:
                 rental["status"] = RentalStatus.RETURNED.name
             elif rental["start_date"] < datetime.utcnow() < rental["end_date"]:
-                rental["status"] = RentalStatus.BOOKED.name
+                rental["status"] = RentalStatus.RESERVED.name
             elif now < rental["start_date"]:
                 rental["status"] = RentalStatus.RESERVED.name
             rentals.append(rental)

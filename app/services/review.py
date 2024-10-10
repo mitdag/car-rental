@@ -11,10 +11,27 @@ from app.schemas.review import ReviewBase, ReviewCreate
 from app.utils import constants
 
 
-# Create a new review
+# Create a new review   
 def create_review(
     db: Session, review: ReviewCreate, reviewer_id: int, reviewee_id: int
 ) -> DBReview:
+     #aditional validations
+    # Validation 1: Ensure reviewee_id is provided
+    if reviewee_id is None:
+        raise ValueError("Reviewee ID must be provided.")
+
+    # Validation 2: Ensure the reviewer and reviewee are not the same person
+    if reviewer_id == reviewee_id:
+        raise ValueError("A reviewer cannot review themselves.")
+
+    # Validation 3: Ensure the rating is within a valid range (1-5, for example)
+    if not (1 <= review.rating <= 5):
+        raise ValueError("Rating must be between 1 and 5.")
+
+    # # Validation 4: Ensure a comment is provided and not empty
+    # if not review.comment or review.comment.strip() == "":
+    #     raise ValueError("A comment must be provided.")
+    #end of adition
     db_review = DBReview(
         rental_id=review.rental_id,
         reviewer_id=reviewer_id,

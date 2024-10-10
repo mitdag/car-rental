@@ -73,6 +73,10 @@ def get_rental_by_id(db: Session, rental_id: int, current_user: DBUser):
 
         return rental
 
+    except HTTPException as e:
+        # Let HTTP exceptions propagate without catching them as unexpected
+        raise e
+
     except SQLAlchemyError as e:
         # Log SQLAlchemy errors
         logger.error(f"Database error occurred: {str(e)}")
