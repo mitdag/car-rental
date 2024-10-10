@@ -87,11 +87,7 @@ def get_views_by_user(
 ) -> Dict[str, Union[int, List[DBReview]]]:
     limit = min(limit, constants.QUERY_LIMIT_MAX)
 
-    q_filter = []
-    if not current_user.is_admin():
-        q_filter.append(
-            or_(DBReview.reviewer_id == user_id, DBReview.reviewer_id == user_id),
-        )
+    q_filter = [or_(DBReview.reviewer_id == user_id, DBReview.reviewer_id == user_id)]
 
     if sort_by == ReviewSort.REVIEW_DATE:
         q_sort = DBReview.review_date

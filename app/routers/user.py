@@ -241,6 +241,9 @@ def get_user_rentals(
 @router.get(
     "/{user_id}/reviews",
     response_model=Dict[str, Union[Optional[int], Optional[List[ReviewDisplay]]]],
+    summary="Get the reviews about a user",
+    description="This endpoint returns the reviews about a user as a renter "
+    "or as a owner of rentals",
 )
 def get_user_reviews(
     user_id: int = Path(...),
