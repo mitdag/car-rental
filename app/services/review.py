@@ -7,11 +7,13 @@ from app.schemas.review import ReviewBase, ReviewCreate
 
 
 # Create a new review
-def create_review(db: Session, review: ReviewCreate, reviewer_id: int) -> DBReview:
+def create_review(
+    db: Session, review: ReviewCreate, reviewer_id: int, reviewee_id: int
+) -> DBReview:
     db_review = DBReview(
         rental_id=review.rental_id,
         reviewer_id=reviewer_id,
-        reviewee_id=review.reviewee_id,
+        reviewee_id=reviewee_id,
         rating=review.rating,
         comment=review.comment,
         review_date=datetime.utcnow(),
