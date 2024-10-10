@@ -11,11 +11,11 @@ from app.schemas.review import ReviewBase, ReviewCreate
 from app.utils import constants
 
 
-# Create a new review   
+# Create a new review
 def create_review(
     db: Session, review: ReviewCreate, reviewer_id: int, reviewee_id: int
 ) -> DBReview:
-     #aditional validations
+    # aditional validations
     # Validation 1: Ensure reviewee_id is provided
     if reviewee_id is None:
         raise ValueError("Reviewee ID must be provided.")
@@ -31,7 +31,7 @@ def create_review(
     # # Validation 4: Ensure a comment is provided and not empty
     # if not review.comment or review.comment.strip() == "":
     #     raise ValueError("A comment must be provided.")
-    #end of adition
+    # end of adition
     db_review = DBReview(
         rental_id=review.rental_id,
         reviewer_id=reviewer_id,
@@ -102,7 +102,7 @@ def get_views_by_user(
     elif sort_by == ReviewSort.RENTAL_ID:
         q_sort = DBReview.id
     else:
-        q_sort = DBReview.RATING
+        q_sort = DBReview.rating
 
     if sort_dir == SortDirection.ASC:
         q_sort = q_sort.asc()
