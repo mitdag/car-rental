@@ -89,7 +89,7 @@ def get_rental_by_id(db: Session, rental_id: int, current_user: DBUser):
 #     return db.query(DBRental).all()
 
 
-def get_all_rentals(
+def get_rentals(
     db,
     current_user: DBUser,
     rental_id: int = None,

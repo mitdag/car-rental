@@ -1,9 +1,14 @@
 from datetime import datetime
+from typing import Dict, Union, List
 
 from sqlalchemy.orm import Session
+from sqlalchemy import or_, func, and_
 
 from app.models.review import DBReview
+from app.models.user import DBUser
+from app.schemas.enums import ReviewSort, SortDirection
 from app.schemas.review import ReviewBase, ReviewCreate
+from app.utils import constants
 
 
 # Create a new review
@@ -52,3 +57,55 @@ def delete_review(db: Session, review_id: int):
         db.delete(db_review)
         db.commit()
     return db_review
+
+
+def get_views_by_user(
+    db,
+    user_id: int,
+    current_user: DBUser,
+    sort_by: ReviewSort = ReviewSort.REVIEW_DATE,
+    sort_dir: SortDirection = SortDirection.ASC,
+    skip: int = 0,
+    limit: int = constants.QUERY_LIMIT_DEFAULT,
+) -> Dict[str, Union[int, List[DBReview]]]:
+    limit = min(limit, constants.QUERY_LIMIT_MAX)
+
+    q_filter = []
+    if not current_user.is_admin():
+        q_filter.append(
+            or_(DBReview.reviewer_id == user_id, DBReview.reviewer_id == user_id),
+        )
+
+    if sort_by == ReviewSort.REVIEW_DATE:
+        q_sort = DBReview.review_date
+    elif sort_by == ReviewSort.REVIEWER_ID:
+        q_sort = DBReview.reviewer_id
+    elif sort_by == ReviewSort.REVIEWEE_ID:
+        q_sort = DBReview.reviewee_id
+    elif sort_by == ReviewSort.RENTAL_ID:
+        q_sort = DBReview.id
+    else:
+        q_sort = DBReview.RATING
+
+    if sort_dir == SortDirection.ASC:
+        q_sort = q_sort.asc()
+    else:
+        q_sort = q_sort.desc()
+
+    total = db.query(func.count(DBReview.id)).filter(and_(*q_filter)).scalar()
+
+    reviews = (
+        db.query(DBReview)
+        .filter(and_(*q_filter))
+        .order_by(q_sort)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return {
+        "current_offset": skip,
+        "counts": len(reviews),
+        "total_counts": total,
+        "next_offset": (skip + limit) if len(reviews) == limit else None,
+        "reviews": reviews,
+    }

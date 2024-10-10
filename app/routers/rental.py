@@ -5,7 +5,7 @@ from app.schemas.enums import RentalSort, SortDirection
 from fastapi import Query, status
 from fastapi.responses import JSONResponse
 from app.auth import oauth2
-from app.services.rental import create_rental, get_all_rentals, get_rental_by_id
+from app.services import rental as rental_service
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.schemas.rental import RentalDisplay, RentalPeriod
@@ -33,13 +33,13 @@ def create_new_rental(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Provide a start and and date",
         )
-    return create_rental(db, car_id, rental_period, current_user.id)
+    return rental_service.create_rental(db, car_id, rental_period, current_user.id)
 
 
 @router.get(
     "", response_model=Dict[str, Union[Optional[int], Optional[List[RentalDisplay]]]]
 )
-def get_rentals(
+def get_rentals(  # noqa: F811
     car_id: int = Query(None),
     rental_id: int = Query(None),
     sort_by: RentalSort = Query(RentalSort.DATE),
@@ -49,7 +49,7 @@ def get_rentals(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    return get_all_rentals(
+    return rental_service.get_rentals(
         db, current_user, rental_id, car_id, sort_by, sort_dir, skip, limit
     )
 
@@ -61,7 +61,7 @@ def get_rental(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    rental_db = get_rental_by_id(db, rental_id, current_user)
+    rental_db = rental_service.get_rental_by_id(db, rental_id, current_user)
     if rental_db is None:
         raise HTTPException(status_code=404, detail="Rental not found")
     return rental_db

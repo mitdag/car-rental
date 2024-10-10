@@ -23,7 +23,7 @@ DEFAULT_PROFILE_PICTURE_FILE = "egg_head.png"
 CAR_IMAGES_PATH = "images/car-images"
 
 # A car ce be reserved up to this week's starting form today.
-LATEST_START_DATE_OF_RENTAL_IN_WEEKS = 6 * 4
+LATEST_START_DATE_OF_RENTAL_IN_WEEKS = 60 * 4
 
 # Maximum rental period in weeks a car can be rented.
 MAX_RENTAL_PERIOD_IN_WEEKS = 8

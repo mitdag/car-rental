@@ -61,7 +61,7 @@ def signup_confirmation(
     if result["result"]:
         title = "Signup Completed"
         message = "Thank you for signing up. You can login and enjoy our app now!"
-        status_code = status.HTTP_200_OK
+        status_code = status.HTTP_201_CREATED
     else:
         title = "Signup Failed"
         message = f"Sorry, something went wrong. ({result['desc']}). Please try again"

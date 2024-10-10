@@ -116,3 +116,11 @@ class RentalSort(str, Enum):
     DATE = "DATE"
     STATUS = "STATUS"
     TOTAL_PRICE = "TOTAL_PRICE"
+
+
+class ReviewSort(str, Enum):
+    RENTAL_ID = "RENTAL_ID"
+    REVIEWER_ID = "REVIEWER_ID"
+    REVIEWEE_ID = "REVIEWEE_ID"
+    RATING = "RATING"
+    REVIEW_DATE = "REVIEW_DATE"

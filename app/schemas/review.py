@@ -41,13 +41,13 @@ class ReviewCreate(BaseModel):
 
 # class ReviewDisplay(ReviewCreate):
 class ReviewDisplay(BaseModel):
-    id: int
+    id: Optional[int]
     # Here under is what is added
-    rental_id: int
+    rental_id: Optional[int]
     # reviewer_id: int
-    reviewer: UserPublicDisplay
-    reviewee: UserPublicDisplay
-    review_date: datetime
+    reviewer: Optional[UserPublicDisplay]
+    reviewee: Optional[UserPublicDisplay]
+    review_date: Optional[datetime]
 
     class Config:
         orm_mode = True
