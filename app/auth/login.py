@@ -93,7 +93,7 @@ def login(
 
 
 @router.post(
-    "/forgot-password",
+    "/forgotten-password",
     summary="Start a 'Forgot password' process",
     description="This endpoint is triggerd when the user clicks 'Forgot password' button. The provided "
     "password is checked if the user really has an account. If so, an change password link "
@@ -118,7 +118,7 @@ def forgot_password(
 @router.get(
     "/password-form",
     response_class=HTMLResponse,
-    summary="Request change password form",
+    summary="Request reset password form",
     description="This endpoint is triggerd when the user clicks the reset password link in the email. "
     "If the link in the email is valid then change_password.html is returned. Else a fail "
     "message is sent by returning request_confirmation.html",
@@ -171,7 +171,7 @@ def reset_password_confirmation(
     if result["result"]:
         title = "Password changed"
         message = result["message"]
-        status_code = status.HTTP_200_OK
+        status_code = status.HTTP_201_CREATED
     else:
         title = "Password Change Failed"
         message = result["message"]
@@ -183,7 +183,7 @@ def reset_password_confirmation(
     )
 
 
-@router.post("/refresh")
+@router.post("/refresh-token")
 def refresh_key(
     current_user=Depends(oauth2.get_current_user_refresh_key),
     db: Session = Depends(database.get_db),

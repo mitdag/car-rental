@@ -132,7 +132,7 @@ def get_user(
     }
 
 
-@router.post("/{user_id}/profile-picture")
+@router.post("/{user_id}/profile-picture", status_code=status.HTTP_201_CREATED)
 def upload_profile_picture(
     user_id: int = Path(...),
     picture: UploadFile = File(
@@ -155,6 +155,16 @@ def get_profile_picture_link(
     user_id: int = Path(...), db: Session = Depends(database.get_db)
 ):
     return user_service.get_profile_picture_link(user_id, db)
+
+
+@router.delete("/{user_id}/profile-picture", status_code=status.HTTP_204_NO_CONTENT)
+def delete_profile_picture(
+    user_id: int = Path(...),
+    db: Session = Depends(database.get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    check_user_id_and_path_parameter(current_user.id, user_id)
+    return user_service.delete_profile_picture(user_id, db)
 
 
 @router.delete("", status_code=status.HTTP_204_NO_CONTENT)
