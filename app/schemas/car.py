@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.enums import CarEngineType, CarMake, CarTransmissionType
+from app.schemas.review import ReviewDisplay
 from app.schemas.user import UserPublicDisplay
 
 
@@ -75,17 +76,28 @@ class CarUpdate(BaseModel):
         from_attributes = True
 
 
+class CarRentalDisplay(BaseModel):
+    id: Optional[int]
+    renter_id: Optional[int]
+    total_price: Optional[float]
+    reviews: Optional[List[ReviewDisplay]]
+
+    class Config:
+        from_attributes = True
+
+
 class CarDisplay(BaseModel):
-    id: int
-    owner: UserPublicDisplay
-    make: str
-    model: str
-    year: int
-    transmission_type: CarTransmissionType
-    motor_type: CarEngineType
-    price_per_day: float
+    id: Optional[int]
+    owner: Optional[UserPublicDisplay]
+    make: Optional[str]
+    model: Optional[str]
+    year: Optional[int]
+    transmission_type: Optional[CarTransmissionType]
+    motor_type: Optional[CarEngineType]
+    price_per_day: Optional[float]
     description: Optional[str]
-    is_listed: bool
+    is_listed: Optional[bool]
+    rentals: Optional[List[CarRentalDisplay]]
 
     class Config:
         from_attributes = True

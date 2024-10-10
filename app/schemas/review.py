@@ -41,12 +41,12 @@ class ReviewCreate(BaseModel):
 
 # class ReviewDisplay(ReviewCreate):
 class ReviewDisplay(BaseModel):
-    id: Optional[int]
+    id: int
     rental_id: Optional[int]
     reviewer_id: Optional[int]
     reviewee_id: Optional[int]
     rating: Optional[int]
-    comment: Optional[str] = None
+    comment: Optional[str]
     reviewer: Optional[UserPublicDisplay]
     reviewee: Optional[UserPublicDisplay]
     review_date: Optional[datetime]
