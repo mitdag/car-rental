@@ -336,7 +336,12 @@ def get_car_pictures(
     # Raise error if car doesnt exist
     car.get_car(db, car_id)
 
-    return car.get_car_pictures(car_id)
+    pictures_list = car.get_car_pictures(car_id)
+    pictures_list = [
+        f"/static/images/car-images/car_{car_id:06}/" + picture
+        for picture in pictures_list
+    ]
+    return pictures_list
 
 
 @router.delete(
