@@ -214,6 +214,8 @@ def change_password(
 @router.get(
     "/{user_id}/rentals",
     response_model=Dict[str, Union[Optional[int], Optional[List[RentalDisplay]]]],
+    summary="Get user's rentals",
+    description="This endpoint returns the rental of a given user.",
 )
 def get_user_rentals(
     user_id: int = Path(...),

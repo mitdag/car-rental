@@ -106,11 +106,11 @@ def get_rentals(
     limit = min(limit, constants.QUERY_LIMIT_MAX)
 
     q_filer = [
-        DBRental.renter_id == rental_id if rental_id else True,
+        DBRental.id == rental_id if rental_id else True,
         DBRental.car_id == car_id if car_id else True,
     ]
-    if not current_user.is_admin():
-        q_filer.append(current_user.id == DBRental.renter_id)
+    # if not current_user.is_admin():
+    #     q_filer.append(current_user.id == DBRental.renter_id)
 
     if sort_by == RentalSort.DATE:
         q_sort = DBRental.start_date
