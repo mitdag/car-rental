@@ -26,7 +26,7 @@ class RentalDisplay(RentalBase):
     reviews: Optional[List[ReviewDisplay]]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class RentalPeriod(BaseModel):
