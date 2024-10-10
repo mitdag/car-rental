@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -7,6 +7,8 @@ from app.auth import oauth2  # Assuming a valid OAuth2 authentication set up
 from app.core.database import get_db
 from app.schemas.review import ReviewBase, ReviewCreate, ReviewDisplay
 from app.services import review
+from app.services.car import get_car
+from app.services.rental import get_rental_by_id
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
@@ -35,9 +37,37 @@ def create_review(
     Returns:
         ReviewDisplay: The newly created review.
     """
+    # Fetch the rental by id and ensure it exists
+    db_rental = get_rental_by_id(db, request.rental_id, current_user)
 
-    # Create the review
-    return review.create_review(db, request, current_user.id)
+    if not db_rental:
+        raise HTTPException(status_code=404, detail="Rental not found")
+
+    # Fetch car owner and renter information
+    renter_id = db_rental.renter_id
+    car = get_car(db, db_rental.car_id)
+
+    if not car:
+        raise HTTPException(status_code=404, detail="Car not found")
+
+    owner_id = car.owner_id
+
+    # Check if the current user is either the renter or the owner of the car
+    reviewee_id: Optional[int] = None
+    if current_user.id == renter_id:
+        reviewee_id = owner_id
+    elif current_user.id == owner_id:
+        reviewee_id = renter_id
+
+    if current_user.id == renter_id or current_user.id == owner_id:
+        # Proceed with creating the review
+        return review.create_review(db, request, current_user.id, reviewee_id)
+    else:
+        # If the user is neither the renter nor the owner, raise a 403 error
+        raise HTTPException(
+            status_code=403,
+            detail="You are not authorized to create a review for this rental",
+        )
 
 
 @router.get("/", response_model=List[ReviewDisplay])
