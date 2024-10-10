@@ -1,7 +1,7 @@
-from datetime import datetime, timezone, timedelta
-from typing import Optional, List
+from datetime import datetime, timedelta, timezone
+from typing import List, Optional
 
-from fastapi import Query, HTTPException
+from fastapi import HTTPException, Query
 from pydantic import BaseModel, Field, model_validator
 from starlette import status
 
@@ -20,13 +20,13 @@ class RentalBase(BaseModel):
 
 
 class RentalDisplay(RentalBase):
-    id: int
-    renter_id: int
-    total_price: float
+    id: Optional[int]
+    renter_id: Optional[int]
+    total_price: Optional[float]
     reviews: Optional[List[ReviewDisplay]]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class RentalPeriod(BaseModel):
