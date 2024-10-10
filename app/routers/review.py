@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.auth import oauth2  # Assuming a valid OAuth2 authentication set up
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/reviews", tags=["reviews"])
 
 @router.post(
     "/",
-    response_model=ReviewDisplay,
+    response_model=ReviewDisplay, status_code=status.HTTP_201_CREATED,
     summary="Create a review",
     description="Create a new review entry. Requires authenticated user.",
 )
