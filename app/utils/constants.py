@@ -8,7 +8,7 @@ QUERY_LIMIT_MAX = 100
 CONFIRMATION_EXPIRE_PERIOD_IN_DAYS = 1
 
 # Life span of access token in minutes
-ACCESS_TOKEN_EXPIRE_MINUTES = 120
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 # Life span of refresh token in days
 REFRESH_TOKEN_EXPIRE_DAYS = 30

@@ -1,10 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Union
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, func, or_
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session, aliased, joinedload
+from sqlalchemy.orm import Session, joinedload
 
 import app.utils.constants as constants
 from app.models.car import DBCar
@@ -14,6 +14,7 @@ from app.schemas.enums import RentalSort, RentalStatus, SortDirection
 from app.schemas.rental import RentalPeriod
 from app.services.car import get_car
 from app.utils.logger import logger
+
 
 # Create a new rental
 
@@ -109,8 +110,8 @@ def get_rentals(
         DBRental.id == rental_id if rental_id else True,
         DBRental.car_id == car_id if car_id else True,
     ]
-    # if not current_user.is_admin():
-    #     q_filer.append(current_user.id == DBRental.renter_id)
+    if not current_user.is_admin():
+        q_filer.append(current_user.id == DBRental.renter_id)
 
     if sort_by == RentalSort.DATE:
         q_sort = DBRental.start_date
@@ -220,46 +221,67 @@ def delete_rental(db: Session, rental_id: int, current_user: DBUser):
 
 
 # new code
-def is_car_available(
-    car_id: int, start_date: datetime, end_date: datetime, db, renter_id: int = None
-):
-    first_rental = db.query(DBRental).filter(DBRental.car_id == car_id).first()
-    if not first_rental:
-        return True
-
-    rental_t1 = aliased(DBRental)
-    rental_t2 = aliased(DBRental)
-    q_filter = [rental_t2.car_id == rental_t1.car_id]
-    if renter_id:
-        q_filter.append(rental_t2.renter_id != renter_id)
-    result = db.execute(
-        select(rental_t1.car_id).where(
+def get_overlapping_rental(car_id: int, start_date: datetime, end_date: datetime, db):
+    rental = (
+        db.query(DBRental)
+        .filter(
             and_(
-                rental_t1.car_id == car_id,
-                rental_t1.car_id.notin_(
-                    select(rental_t2.car_id).where(
-                        and_(
-                            *q_filter,
-                            or_(
-                                and_(
-                                    start_date >= rental_t2.start_date,
-                                    start_date <= rental_t2.end_date,
-                                ),
-                                and_(
-                                    end_date >= rental_t2.start_date,
-                                    end_date <= rental_t2.end_date,
-                                ),
-                            ),
-                        )
-                    )
+                car_id == DBRental.car_id,
+                or_(
+                    and_(
+                        start_date >= DBRental.start_date,
+                        start_date <= DBRental.end_date,
+                    ),
+                    and_(
+                        end_date >= DBRental.start_date, end_date <= DBRental.end_date
+                    ),
                 ),
             )
         )
-    ).all()
-    return len(result) != 0
+        .first()
+    )
+    return rental
+
+
+def is_car_available(car_id: int, start_date: datetime, end_date: datetime, db):
+    overlapping_rental = get_overlapping_rental(car_id, start_date, end_date, db)
+    return overlapping_rental is None
 
 
 def is_car_available_for_update(
     car_id: int, start_date: datetime, end_date: datetime, db, renter_id: int
 ):
-    return is_car_available(car_id, start_date, end_date, db, renter_id)
+    reserved_period: DBRental = get_overlapping_rental(car_id, start_date, end_date, db)
+    if not reserved_period:
+        return True
+    if reserved_period.renter_id != renter_id:
+        return False
+
+    converted_date_start = datetime(
+        year=reserved_period.start_date.year,
+        month=reserved_period.start_date.month,
+        day=reserved_period.start_date.day,
+    )
+    converted_date_end = datetime(
+        year=reserved_period.end_date.year,
+        month=reserved_period.end_date.month,
+        day=reserved_period.end_date.day,
+    )
+    is_available = False
+    if start_date.date() < reserved_period.start_date:
+        is_available = is_car_available(
+            car_id,
+            start_date + timedelta(seconds=1),
+            converted_date_start - timedelta(seconds=1),
+            db,
+        )
+        if not is_available:
+            return False
+    if end_date.date() > reserved_period.end_date:
+        is_available = is_car_available(
+            car_id,
+            converted_date_end + timedelta(seconds=1),
+            end_date - timedelta(seconds=1),
+            db,
+        )
+    return is_available
