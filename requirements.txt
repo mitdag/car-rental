@@ -1,13 +1,13 @@
 fastapi[standard]
-uvicorn
-sqlalchemy
-passlib
-bcrypt
-python-multipart
-geopy
-python-jose
-pre-commit
-alembic
+uvicorn                             # needed for web service
+sqlalchemy                          # needed for db ops.
+passlib                             # needed for password encryption
+bcrypt                              # needed for password encryption
+python-multipart                    # needed for form reading
+geopy                               # needed for adress conversions to lat, lon
+python-jose                         # needed for json web tokens
+pre-commit                          # needed for pre commit formating etc.
+alembic                             # database migration tool for usage with the SQLAlchemy Database
 sqlalchemy-utils
 Pillow
 fastapi-pagination
