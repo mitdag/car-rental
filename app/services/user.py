@@ -25,13 +25,10 @@ def get_user_by_id(user_id: int, db: Session):
     return user
 
 
-def get_user_by_email(email: str, db: Session):
-    user = db.query(DBUser).filter(DBUser.email == email).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist."
-        )
-    return user
+def get_user_by_email(email: str, db):
+    return (
+        db.query(DBUser).filter(func.lower(DBUser.email) == func.lower(email)).first()
+    )
 
 
 def get_users(db: Session, skip: int = 0, limit: int = 20):
