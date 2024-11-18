@@ -189,7 +189,9 @@ def refresh_key(
     db: Session = Depends(database.get_db),
 ):
     user, token = current_user
-    db_token = db.query(DBRefreshToken).filter(DBRefreshToken.email == user.email)
+    db_token = (
+        db.query(DBRefreshToken).filter(DBRefreshToken.email == user.email).first()
+    )
     # At this point access_token provided by the user is valid (i.e. it was issued by this application and
     # it has not expired yet. However, we should make sure that the user did not revoke it (i.e. logged out)
     # in the past. Thus, it must be in our db.
