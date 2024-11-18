@@ -12,13 +12,13 @@ from app.models.refresh_token import DBRefreshToken
 from app.models.signup_confirmations import DBSignUpConfirmation
 from app.models.user import DBUser
 from app.schemas.enums import LoginMethod, UserType
-from app.services.user import get_user_by_email
+from app.services import user as user_service
 from app.utils.constants import CONFIRMATION_EXPIRE_PERIOD_IN_DAYS
 from app.utils.hash import Hash
 
 
 def create_signup_validation_entry(email: str, password: str, db: Session):
-    user = db.query(DBUser).filter(email == DBUser.email).first()
+    user = user_service.get_user_by_email(email, db)
     if user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists"
@@ -33,7 +33,7 @@ def create_signup_validation_entry(email: str, password: str, db: Session):
     )
     db.add(new_confirmation)
     db.commit()
-    db.flush(new_confirmation)
+    db.refresh(new_confirmation)
     return {
         "id": new_confirmation.id,
         "key": new_confirmation.key,
@@ -42,9 +42,7 @@ def create_signup_validation_entry(email: str, password: str, db: Session):
 
 
 # This function is called via user confirmation email.
-def create_signup_user_from_confirmation_mail(
-    confirmation_id: int, key: str, db: Session
-):
+def create_signup_user_from_confirmation_mail(confirmation_id: int, key: str, db):
     confirmation = (
         db.query(DBSignUpConfirmation)
         .filter(
@@ -65,7 +63,7 @@ def create_signup_user_from_confirmation_mail(
     if confirmation.expires_at < datetime.datetime.utcnow():
         return {"result": False, "desc": "Confirmation link expired"}
 
-    user = db.query(DBUser).filter(confirmation_email == DBUser.email).first()
+    user = user_service.get_user_by_email(confirmation_email, db)
     if user:
         return {"result": False, "desc": "User already exists"}
 
@@ -78,12 +76,12 @@ def create_signup_user_from_confirmation_mail(
     )
     db.add(user)
     db.commit()
-    db.flush(user)
+    db.refresh(user)
     return {"result": True, "desc": user.email}
 
 
 def create_social_media_signup_user(email: str, login_method: LoginMethod, db: Session):
-    user = db.query(DBUser).filter(email == DBUser.email).first()
+    user = user_service.get_user_by_email(email, db)
     if user:
         return {"result": False, "desc": "User already exists"}
 
@@ -96,12 +94,12 @@ def create_social_media_signup_user(email: str, login_method: LoginMethod, db: S
     )
     db.add(user)
     db.commit()
-    db.flush(user)
+    db.refresh(user)
     return {"result": True, "desc": user.email}
 
 
 def update_user_login(email: str, db: Session):
-    user = get_user_by_email(email, db)
+    user = user_service.get_user_by_email(email, db)
     if user:
         user.last_login = datetime.datetime.now()
         db.commit()
@@ -109,7 +107,7 @@ def update_user_login(email: str, db: Session):
 
 
 def create_forgot_password_validation_entry(email: str, db: Session):
-    user = db.query(DBUser).filter(email == DBUser.email).first()
+    user = user_service.get_user_by_email(email, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="No such user."
@@ -159,7 +157,7 @@ def check_forgot_password_confirmation(confirm_id: int, key: str, db: Session):
 
 
 def check_user(email: str, db):
-    user = db.query(DBUser).filter(DBUser.email == email).first()
+    user = user_service.get_user_by_email(email, db)
     if not user:
         return {
             "result": False,
