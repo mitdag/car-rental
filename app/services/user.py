@@ -14,15 +14,23 @@ from app.utils import constants
 from app.utils.constants import PROFILE_PICTURES_PATH, DEFAULT_PROFILE_PICTURE_FILE
 from app.utils.logger import logger
 from app.utils.hash import Hash
+from app.utils.service_response import ServiceResponse, ServiceResponseStatus
 
 
 def get_user_by_id(user_id: int, db: Session):
     user = db.query(DBUser).filter(DBUser.id == user_id).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist."
+        return ServiceResponse(
+            status=ServiceResponseStatus.NOT_FOUND,
+            message="User does not exist.",
+            data=None
         )
-    return user
+    else:
+        return ServiceResponse(
+                status=ServiceResponseStatus.SUCCESS,
+                message="",
+                data=user
+            )
 
 
 def get_user_by_email(email: str, db):
@@ -34,19 +42,24 @@ def get_user_by_email(email: str, db):
 def get_users(db: Session, skip: int = 0, limit: int = 20):
     limit = min(limit, constants.QUERY_LIMIT_MAX)
     if skip < 0 or limit < 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Skip and limit must be positive integers",
+        return ServiceResponse(
+            status=ServiceResponseStatus.BAD_REQUEST,
+            message="Skip and limit must be positive integers",
+            data=None
         )
     total = db.query(func.count(DBUser.id)).scalar()
     users = db.query(DBUser).offset(skip).limit(limit).all()
-    return {
-        "current_offset": skip,
-        "counts": len(users),
-        "total_counts": total,
-        "next_offset": (skip + limit) if len(users) == limit else None,
-        "cars": users,
-    }
+    return ServiceResponse(
+        status=ServiceResponseStatus.SUCCESS,
+        message="",
+        data={
+            "current_offset": skip,
+            "counts": len(users),
+            "total_counts": total,
+            "next_offset": (skip + limit) if len(users) == limit else None,
+            "users": users,
+        }
+    )
 
 
 def get_user_profile(user_id: int, db: Session):
@@ -61,9 +74,9 @@ def modify_user(user_id: int, user_profile: UserProfileForm, db: Session):
         )
 
     db_user.is_profile_completed = (
-        db_user.last_name != ""
-        and db_user.last_name != ""
-        and db_user.phone_number != ""
+            db_user.last_name != ""
+            and db_user.last_name != ""
+            and db_user.phone_number != ""
     )
 
     update_data = user_profile.model_dump(exclude_unset=True, exclude={"address"})
@@ -95,7 +108,7 @@ def modify_user(user_id: int, user_profile: UserProfileForm, db: Session):
 def get_picture_name_and_path(user_id: int):
     current_dir = pathlibPath(os.path.dirname(__file__)).as_posix()
     pictures_path = (
-        current_dir[: current_dir.rindex("/")] + "/static/images/profile-pictures"
+            current_dir[: current_dir.rindex("/")] + "/static/images/profile-pictures"
     )
     file_name_no_ext = f"user_{(str(user_id)):0>6}"
     files = list(
@@ -115,7 +128,7 @@ def upload_user_profile_picture(picture: UploadFile, user_id: int):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid file type. "
-            f"Only {', '.join(list(map(lambda t: t.replace('image/', '').upper(), allowed_types)))} types are allowed.",
+                   f"Only {', '.join(list(map(lambda t: t.replace('image/', '').upper(), allowed_types)))} types are allowed.",
         )
     for f in current_files:
         os.remove(f"{pictures_path}/{f}")
@@ -166,9 +179,9 @@ def is_user_profile_complete(user_id, db):
         return False
     else:
         return (
-            user.phone_number != ""
-            and user.is_verified
-            and address_service.is_user_address_complete(user_id, db)
+                user.phone_number != ""
+                and user.is_verified
+                and address_service.is_user_address_complete(user_id, db)
         )
 
 

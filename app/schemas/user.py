@@ -75,30 +75,3 @@ class UserPublicDisplay(BaseModel):
     class Config:
         from_attributes = True
 
-
-def create_user_private_display(user: DBUser):
-    if not user:
-        return None
-    return UserDisplay(
-        id=user.id,
-        name=user.name,
-        last_name=user.last_name,
-        email=user.email,
-        login_method=user.login_method,
-        phone_number=user.phone_number,
-        user_type=user.user_type,
-        is_verified=user.is_verified,
-        is_profile_completed=user.is_profile_completed,
-        address=address.create_address_private_display(user),
-    )
-
-
-def create_user_public_display(user: DBUser):
-    if not user:
-        return None
-    return UserPublicDisplay(
-        id=user.id,
-        name=user.name,
-        last_name=user.last_name,
-        address=address.create_address_public_display(user),
-    )
