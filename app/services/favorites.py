@@ -28,7 +28,7 @@ def add_to_favorite(car_id: int, current_user: UserBase, db: Session):
     try:
         db.add(favorite)
         db.commit()
-        db.flush(favorite)
+        db.refresh(favorite)
     except IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
