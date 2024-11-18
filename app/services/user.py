@@ -4,10 +4,12 @@ from pathlib import Path as pathlibPath
 
 from fastapi import UploadFile, status
 from fastapi.exceptions import HTTPException
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.models.user import DBUser
+from app.schemas.enums import LoginMethod, UserType
 from app.schemas.user import UserProfileForm
 from app.services import address as address_service
 from app.utils import constants
@@ -60,6 +62,37 @@ def get_users(db: Session, skip: int = 0, limit: int = 20):
             "users": users,
         }
     )
+
+
+def create_new_user(email: str, password: str, signup_method: LoginMethod, user_type: UserType, is_verified: bool, db:Session):
+    try:
+        user = DBUser(
+            email=email,
+            password=Hash.bcrypt(password),
+            login_method=LoginMethod.EMAIL,
+            user_type=UserType.USER,
+            is_verified=True,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return ServiceResponse(
+            status=ServiceResponseStatus.SUCCESS,
+            message="Created",
+            data=user
+        )
+    except IntegrityError:
+        return ServiceResponse(
+            status=ServiceResponseStatus.BAD_REQUEST,
+            message="User already exists",
+            data=None
+        )
+    except SQLAlchemyError:
+        return ServiceResponse(
+            status=ServiceResponseStatus.INTERNAL_SERVER_ERROR,
+            message="Internal service error",
+            data=None
+        )
 
 
 def get_user_profile(user_id: int, db: Session):

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Dict
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -45,6 +46,15 @@ def create_tokens(data: dict):
     return encoded_access_token_jwt, encoded_refresh_token_jwt
 
 
+def create_temp_confirmation_token(data: Dict, expire_minutes: int):
+    to_encode = data.copy()
+    to_encode.update({"exp": datetime.now() + timedelta(minutes=expire_minutes)})
+    encoded_confirmation_jwt = jwt.encode(
+        to_encode, SECRET_KEY_ACCESS_TOKEN, algorithm=ALGORITHM
+    )
+    return encoded_confirmation_jwt
+
+
 def get_current_user(
     token_enc: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)
 ):
@@ -70,6 +80,21 @@ def get_current_user(
         logger.error("Could not authenticate")
         raise credential_exception
     return current_user
+
+
+def get_temp_user(key: str = Depends(oauth2_scheme)):
+    credential_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not verify the request (link might have expired)",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        user_info = jwt.decode(key, SECRET_KEY_ACCESS_TOKEN, algorithms=ALGORITHM)
+    except Exception:
+        logger.error("Could not authenticate")
+        raise credential_exception
+    return user_info
 
 
 def get_current_user_refresh_key(
@@ -101,10 +126,7 @@ def get_current_user_refresh_key(
     return current_user, refresh_token
 
 
-def admin_only(
-    current_user=Depends(get_current_user),
-    db: Session = Depends(database.get_db),
-):
+def admin_only(current_user=Depends(get_current_user)):
     """
     Dependency that restricts access to admin users only.
 
@@ -113,7 +135,6 @@ def admin_only(
 
     Args:
         current_user: A dependency that retrieves the currently authenticated user.
-        db: A dependency that provides the database session.
 
     Raises:
         HTTPException: If the user does not have admin privileges, an exception with status code 403 is raised.
